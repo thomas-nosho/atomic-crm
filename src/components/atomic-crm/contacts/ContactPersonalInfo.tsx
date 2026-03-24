@@ -50,7 +50,19 @@ export const ContactPersonalInfo = () => {
         <SingleFieldList className="flex-col gap-y-0">
           <PersonalInfoRow
             icon={<Phone className="w-4 h-4 text-muted-foreground" />}
-            primary={<TextField source="number" />}
+            primary={
+              <WithRecord
+                render={(row) => (
+                  <a
+                    href={`facetime:${row.number}`}
+                    className="hover:underline text-sm"
+                    title={`Appeler via FaceTime : ${row.number}`}
+                  >
+                    {row.number}
+                  </a>
+                )}
+              />
+            }
             showType
           />
         </SingleFieldList>
