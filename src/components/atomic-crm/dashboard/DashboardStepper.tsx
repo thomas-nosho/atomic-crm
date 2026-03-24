@@ -1,5 +1,6 @@
 import { CheckCircle, Circle, Plus } from "lucide-react";
 import type { Identifier } from "ra-core";
+import { useTranslate } from "ra-core";
 import { Link } from "react-router";
 import { useState } from "react";
 import { CreateButton } from "@/components/admin/create-button";
@@ -24,6 +25,7 @@ export const DashboardStepper = ({
   const isMobile = useIsMobile();
   const [contactCreateOpen, setContactCreateOpen] = useState(false);
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
+  const translate = useTranslate();
   return (
     <>
       <ContactCreateSheet
@@ -44,16 +46,16 @@ export const DashboardStepper = ({
         <Card className="w-full max-w-[600px]">
           <CardContent className="px-6">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-lg font-bold">Et maintenant ?</h3>
+              <h3 className="text-lg font-bold">{translate("crm.stepper.whats_next")}</h3>
               <div className="w-[150px]">
                 <Progress value={(step / 3) * 100} className="mb-2" />
-                <div className="text-right text-sm">{step}/3 fait</div>
+                <div className="text-right text-sm">{step}/3 {translate("crm.stepper.done")}</div>
               </div>
             </div>
             <div className="flex flex-col gap-12">
               <div className="flex gap-8 items-center">
                 <CheckCircle className="text-green-600 w-5 h-5 shrink-0" />
-                <h4 className="font-bold">Installer Atomic CRM</h4>
+                <h4 className="font-bold">{translate("crm.stepper.install")}</h4>
               </div>
               <div className="flex gap-8 items-start">
                 {step > 1 ? (
@@ -63,7 +65,7 @@ export const DashboardStepper = ({
                 )}
 
                 <div className="flex flex-col gap-4">
-                  <h4 className="font-bold">Ajouter votre premier contact</h4>
+                  <h4 className="font-bold">{translate("crm.stepper.add_contact")}</h4>
 
                   <div className="flex gap-8">
                     {isMobile ? (
@@ -73,11 +75,11 @@ export const DashboardStepper = ({
                         variant="outline"
                       >
                         <Plus className="h-4 w-4" />
-                        Nouveau contact
+                        {translate("crm.stepper.new_contact")}
                       </Button>
                     ) : (
                       <>
-                        <CreateButton label="Nouveau contact" resource="contacts" />
+                        <CreateButton label={translate("crm.stepper.new_contact")} resource="contacts" />
                         <ContactImportButton />
                       </>
                     )}
@@ -87,8 +89,8 @@ export const DashboardStepper = ({
               <div className="flex gap-8 items-start">
                 <Circle className="text-muted-foreground w-5 h-5 mt-1 shrink-0" />
                 <div className="flex flex-col gap-4">
-                  <h4 className="font-bold">Ajouter votre première note</h4>
-                  <p>Ouvrez une fiche contact et ajoutez une note</p>
+                  <h4 className="font-bold">{translate("crm.stepper.add_note")}</h4>
+                  <p>{translate("crm.stepper.add_note_hint")}</p>
                   {isMobile ? (
                     <Button
                       onClick={() => setNoteCreateOpen(true)}
@@ -96,11 +98,11 @@ export const DashboardStepper = ({
                       className="w-[100px] gap-2"
                     >
                       <Plus className="h-4 w-4" />
-                      Ajouter note
+                      {translate("crm.stepper.add_note_button")}
                     </Button>
                   ) : (
                     <Button asChild disabled={step < 2} className="w-[100px]">
-                      <Link to={`/contacts/${contactId}/show`}>Ajouter note</Link>
+                      <Link to={`/contacts/${contactId}/show`}>{translate("crm.stepper.add_note_button")}</Link>
                     </Button>
                   )}
                 </div>

@@ -28,6 +28,8 @@ export const customFrenchMessages = {
       deals: "Opportunités",
       tasks: "Tâches",
       home: "Accueil",
+      view_create: "Créer une nouvelle vue",
+      mobile_settings: "Réglages",
     },
     // User menu
     menu: {
@@ -35,6 +37,7 @@ export const customFrenchMessages = {
       settings: "Paramètres",
       users: "Utilisateurs",
       import: "Importer",
+      connectors: "Connecteurs",
     },
     // Contact form
     contact: {
@@ -44,6 +47,7 @@ export const customFrenchMessages = {
       misc: "Divers",
       email_addresses: "Adresses email",
       phone_numbers: "Téléphones",
+      phone_placeholder: "Téléphone…",
       background: "Notes contextuelles (bio, contexte de rencontre…)",
       account_manager: "Responsable commercial",
       linkedin_url: "URL LinkedIn",
@@ -59,6 +63,10 @@ export const customFrenchMessages = {
       linked_to: "Lié à",
       misc: "Divers",
       category: "Catégorie",
+      view: "Vue",
+      all_views: "Toutes les vues",
+      associated_contacts: "Contacts associés",
+      trial_start: "Début du trial",
     },
     // Note form
     note: {
@@ -67,11 +75,17 @@ export const customFrenchMessages = {
       options_hint: "(joindre un fichier ou modifier les détails)",
       contact: "Contact",
       deal: "Opportunité",
+      add: "Ajouter cette note",
+      added: "Note ajoutée",
     },
     // Task form
     task: {
       description: "Description",
       contact: "Contact",
+      create: "Créer une tâche",
+      create_for: "Créer une tâche pour",
+      add: "Ajouter une tâche",
+      added: "Tâche ajoutée",
     },
     // Dashboard
     dashboard: {

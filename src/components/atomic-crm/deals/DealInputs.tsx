@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { required } from "ra-core";
+import { required, useTranslate } from "ra-core";
 import { useFormContext } from "react-hook-form";
 import { AutocompleteArrayInput } from "@/components/admin/autocomplete-array-input";
 import { ReferenceArrayInput } from "@/components/admin/reference-array-input";
@@ -47,11 +47,12 @@ export const DealInputs = () => {
 };
 
 const DealInfoInputs = () => {
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4 flex-1">
       <TextInput
         source="name"
-        label="Nom de l'opportunité"
+        label={translate("crm.deal.name")}
         validate={required()}
         helperText={false}
       />
@@ -71,6 +72,7 @@ const DealLinkedToInputs = ({
 }) => {
   const { companyTypes } = useConfigurationContext();
   const { setValue } = useFormContext();
+  const translate = useTranslate();
 
   const handleTypeChange = (newType: string) => {
     const type = newType === ALL_TYPES ? "" : newType;
@@ -82,10 +84,10 @@ const DealLinkedToInputs = ({
 
   return (
     <div className="flex flex-col gap-4 flex-1">
-      <h3 className="text-base font-medium">Lié à</h3>
+      <h3 className="text-base font-medium">{translate("crm.deal.linked_to")}</h3>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium">Vue</label>
+        <label className="text-sm font-medium">{translate("crm.deal.view")}</label>
         <Select
           value={companyTypeFilter || ALL_TYPES}
           onValueChange={handleTypeChange}
@@ -94,7 +96,7 @@ const DealLinkedToInputs = ({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_TYPES}>Toutes les vues</SelectItem>
+            <SelectItem value={ALL_TYPES}>{translate("crm.deal.all_views")}</SelectItem>
             {companyTypes.map((type) => (
               <SelectItem key={type.value} value={type.value}>
                 {type.label}
@@ -117,7 +119,7 @@ const DealLinkedToInputs = ({
 
       <ReferenceArrayInput source="contact_ids" reference="contacts_summary">
         <AutocompleteArrayInput
-          label="Contacts associés"
+          label={translate("crm.deal.associated_contacts")}
           optionText={contactOptionText}
           helperText={false}
         />
@@ -128,13 +130,14 @@ const DealLinkedToInputs = ({
 
 const DealMiscInputs = () => {
   const { dealStages, dealCategories } = useConfigurationContext();
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4 flex-1">
-      <h3 className="text-base font-medium">Divers</h3>
+      <h3 className="text-base font-medium">{translate("crm.deal.misc")}</h3>
 
       <SelectInput
         source="category"
-        label="Catégorie"
+        label={translate("crm.deal.category")}
         choices={dealCategories}
         optionText="label"
         optionValue="value"
@@ -154,7 +157,7 @@ const DealMiscInputs = () => {
       />
       <DateInput
         source="trial_start_date"
-        label="Début du trial"
+        label={translate("crm.deal.trial_start")}
         helperText={false}
       />
       <SelectInput

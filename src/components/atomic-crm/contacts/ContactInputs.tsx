@@ -1,4 +1,4 @@
-import { email, required } from "ra-core";
+import { email, required, useTranslate } from "ra-core";
 import type { FocusEvent, ClipboardEventHandler } from "react";
 import { useFormContext } from "react-hook-form";
 import { Separator } from "@/components/ui/separator";
@@ -43,9 +43,10 @@ export const ContactInputs = () => {
 };
 
 const ContactIdentityInputs = () => {
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">Identité</h6>
+      <h6 className="text-lg font-semibold">{translate("crm.contact.identity")}</h6>
       <RadioButtonGroupInput
         label={false}
         row
@@ -63,9 +64,10 @@ const ContactIdentityInputs = () => {
 };
 
 const ContactPositionInputs = () => {
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">Poste</h6>
+      <h6 className="text-lg font-semibold">{translate("crm.contact.position")}</h6>
       <TextInput source="title" helperText={false} />
       <ReferenceInput source="company_id" reference="companies" perPage={10}>
         <AutocompleteCompanyInput />
@@ -103,12 +105,13 @@ const ContactPersonalInformationInputs = () => {
     handleEmailChange(email);
   };
 
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">Infos personnelles</h6>
+      <h6 className="text-lg font-semibold">{translate("crm.contact.personal_info")}</h6>
       <ArrayInput
         source="email_jsonb"
-        label="Adresses email"
+        label={translate("crm.contact.email_addresses")}
         helperText={false}
       >
         <SimpleFormIterator
@@ -138,7 +141,7 @@ const ContactPersonalInformationInputs = () => {
           />
         </SimpleFormIterator>
       </ArrayInput>
-      <ArrayInput source="phone_jsonb" label="Téléphones" helperText={false}>
+      <ArrayInput source="phone_jsonb" label={translate("crm.contact.phone_numbers")} helperText={false}>
         <SimpleFormIterator
           inline
           disableReordering
@@ -150,7 +153,7 @@ const ContactPersonalInformationInputs = () => {
             className="w-full"
             helperText={false}
             label={false}
-            placeholder="Téléphone…"
+            placeholder={translate("crm.contact.phone_placeholder")}
           />
           <SelectInput
             source="type"
@@ -165,7 +168,7 @@ const ContactPersonalInformationInputs = () => {
       </ArrayInput>
       <TextInput
         source="linkedin_url"
-        label="URL LinkedIn"
+        label={translate("crm.contact.linkedin_url")}
         helperText={false}
         validate={isLinkedinUrl}
       />
@@ -176,12 +179,13 @@ const ContactPersonalInformationInputs = () => {
 const personalInfoTypes = [{ id: "Work" }, { id: "Home" }, { id: "Other" }];
 
 const ContactMiscInputs = () => {
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">Divers</h6>
+      <h6 className="text-lg font-semibold">{translate("crm.contact.misc")}</h6>
       <TextInput
         source="background"
-        label="Notes contextuelles (bio, contexte de rencontre…)"
+        label={translate("crm.contact.background")}
         multiline
         helperText={false}
       />
@@ -196,7 +200,7 @@ const ContactMiscInputs = () => {
       >
         <SelectInput
           helperText={false}
-          label="Responsable commercial"
+          label={translate("crm.contact.account_manager")}
           optionText={saleOptionRenderer}
           validate={required()}
         />

@@ -21,7 +21,7 @@ import {
   Sun,
   Users,
 } from "lucide-react";
-import { Translate, useAuthProvider, useGetIdentity, useLogout } from "ra-core";
+import { Translate, useAuthProvider, useGetIdentity, useLogout, useTranslate } from "ra-core";
 import { Link, matchPath, useLocation, useMatch } from "react-router";
 import { ContactCreateSheet } from "../contacts/ContactCreateSheet";
 import { useState } from "react";
@@ -30,6 +30,7 @@ import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
 
 export const MobileNavigation = () => {
   const location = useLocation();
+  const translate = useTranslate();
 
   let currentPath: string | boolean = "/";
   if (matchPath("/", location.pathname)) {
@@ -70,20 +71,20 @@ export const MobileNavigation = () => {
           <NavigationButton
             href="/"
             Icon={Home}
-            label="Accueil"
+            label={translate("crm.nav.home")}
             isActive={currentPath === "/"}
           />
           <NavigationButton
             href="/contacts"
             Icon={Users}
-            label="Contacts"
+            label={translate("crm.nav.contacts")}
             isActive={currentPath === "/contacts"}
           />
           <CreateButton />
           <NavigationButton
             href="/tasks"
             Icon={ListTodo}
-            label="Tâches"
+            label={translate("crm.nav.tasks")}
             isActive={currentPath === "/tasks"}
           />
           <SettingsButton />
@@ -124,6 +125,7 @@ const CreateButton = () => {
   const [contactCreateOpen, setContactCreateOpen] = useState(false);
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
+  const translate = useTranslate();
 
   return (
     <>
@@ -159,7 +161,7 @@ const CreateButton = () => {
               setContactCreateOpen(true);
             }}
           >
-            Contact
+            {translate("crm.create.contact")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="h-12 px-4 text-base"
@@ -167,7 +169,7 @@ const CreateButton = () => {
               setNoteCreateOpen(true);
             }}
           >
-            Note
+            {translate("crm.create.note")}
           </DropdownMenuItem>
           <DropdownMenuItem
             className="h-12 px-4 text-base"
@@ -175,7 +177,7 @@ const CreateButton = () => {
               setTaskCreateOpen(true);
             }}
           >
-            Tâche
+            {translate("crm.create.task")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -187,6 +189,7 @@ const SettingsButton = () => {
   const authProvider = useAuthProvider();
   const { data: identity } = useGetIdentity();
   const logout = useLogout();
+  const translate = useTranslate();
   if (!authProvider) return null;
   return (
     <DropdownMenu>
@@ -196,7 +199,7 @@ const SettingsButton = () => {
           className="flex-col gap-1 h-auto py-2 px-1 rounded-md w-16 text-muted-foreground"
         >
           <Settings className="size-6" />
-          <span className="text-[0.6rem] font-medium">Réglages</span>
+          <span className="text-[0.6rem] font-medium">{translate("crm.nav.mobile_settings")}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>

@@ -1,5 +1,5 @@
 import { Import, Plus, Plug, Settings, User, Users } from "lucide-react";
-import { CanAccess, useCanAccess, useGetIdentity, useUserMenu } from "ra-core";
+import { CanAccess, useCanAccess, useGetIdentity, useTranslate, useUserMenu } from "ra-core";
 import { useState } from "react";
 import { Link, matchPath, useLocation } from "react-router";
 import { RefreshButton } from "@/components/admin/refresh-button";
@@ -21,6 +21,7 @@ const Header = () => {
     resource: "configuration",
     action: "edit",
   });
+  const translate = useTranslate();
 
   // Filter views: admins see all, regular users see views where allowedUserIds is empty or includes them
   const currentSaleId = identity?.id as number | undefined;
@@ -76,22 +77,22 @@ const Header = () => {
               <div>
                 <nav className="flex items-center">
                   <NavigationTab
-                    label="Tableau de bord"
+                    label={translate("crm.nav.dashboard")}
                     to="/"
                     isActive={currentPath === "/"}
                   />
                   <NavigationTab
-                    label="Contacts"
+                    label={translate("crm.nav.contacts")}
                     to="/contacts"
                     isActive={currentPath === "/contacts"}
                   />
                   <NavigationTab
-                    label="Sociétés"
+                    label={translate("crm.nav.companies")}
                     to="/companies"
                     isActive={currentPath === "/companies"}
                   />
                   <NavigationTab
-                    label="Opportunités"
+                    label={translate("crm.nav.deals")}
                     to="/deals"
                     isActive={currentPath === "/deals"}
                   />
@@ -106,7 +107,7 @@ const Header = () => {
                   {isAdmin && (
                     <button
                       onClick={() => setCreateViewOpen(true)}
-                      title="Créer une nouvelle vue"
+                      title={translate("crm.nav.view_create")}
                       className="flex items-center justify-center w-7 h-7 ml-1 rounded-full text-secondary-foreground/50 hover:text-secondary-foreground hover:bg-secondary-foreground/10 transition-all"
                     >
                       <Plus className="h-4 w-4" />
@@ -160,13 +161,14 @@ const NavigationTab = ({
 
 const UsersMenu = () => {
   const userMenuContext = useUserMenu();
+  const translate = useTranslate();
   if (!userMenuContext) {
     throw new Error("<UsersMenu> must be used inside <UserMenu?");
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
       <Link to="/sales" className="flex items-center gap-2">
-        <Users /> Utilisateurs
+        <Users /> {translate("crm.menu.users")}
       </Link>
     </DropdownMenuItem>
   );
@@ -174,6 +176,7 @@ const UsersMenu = () => {
 
 const ProfileMenu = () => {
   const userMenuContext = useUserMenu();
+  const translate = useTranslate();
   if (!userMenuContext) {
     throw new Error("<ProfileMenu> must be used inside <UserMenu?");
   }
@@ -181,7 +184,7 @@ const ProfileMenu = () => {
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
       <Link to="/profile" className="flex items-center gap-2">
         <User />
-        Profil
+        {translate("crm.menu.profile")}
       </Link>
     </DropdownMenuItem>
   );
@@ -189,13 +192,14 @@ const ProfileMenu = () => {
 
 const ConnectorsMenu = () => {
   const userMenuContext = useUserMenu();
+  const translate = useTranslate();
   if (!userMenuContext) {
     throw new Error("<ConnectorsMenu> must be used inside <UserMenu>");
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
       <Link to="/connectors" className="flex items-center gap-2">
-        <Plug /> Connecteurs
+        <Plug /> {translate("crm.menu.connectors")}
       </Link>
     </DropdownMenuItem>
   );
@@ -203,13 +207,14 @@ const ConnectorsMenu = () => {
 
 const SettingsMenu = () => {
   const userMenuContext = useUserMenu();
+  const translate = useTranslate();
   if (!userMenuContext) {
     throw new Error("<SettingsMenu> must be used inside <UserMenu>");
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
       <Link to="/settings" className="flex items-center gap-2">
-        <Settings /> Paramètres
+        <Settings /> {translate("crm.menu.settings")}
       </Link>
     </DropdownMenuItem>
   );
@@ -217,13 +222,14 @@ const SettingsMenu = () => {
 
 const ImportFromJsonMenuItem = () => {
   const userMenuContext = useUserMenu();
+  const translate = useTranslate();
   if (!userMenuContext) {
     throw new Error("<ImportFromJsonMenuItem> must be used inside <UserMenu>");
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
       <Link to={ImportPage.path} className="flex items-center gap-2">
-        <Import /> Importer
+        <Import /> {translate("crm.menu.import")}
       </Link>
     </DropdownMenuItem>
   );
