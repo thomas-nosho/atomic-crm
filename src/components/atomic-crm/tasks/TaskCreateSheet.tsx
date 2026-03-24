@@ -1,15 +1,17 @@
 import {
   type Identifier,
-  RecordRepresentation,
   useDataProvider,
   useGetIdentity,
   useGetOne,
+  useGetRecordRepresentation,
   useNotify,
+  useTranslate,
   useUpdate,
 } from "ra-core";
 import { CreateSheet } from "../misc/CreateSheet";
 import { foreignKeyMapping } from "../notes/foreignKeyMapping";
 import { TaskFormContent } from "./TaskFormContent";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface TaskCreateSheetProps {
   open: boolean;
@@ -23,6 +25,8 @@ export const TaskCreateSheet = ({
   contact_id,
 }: TaskCreateSheetProps) => {
   const { identity } = useGetIdentity();
+  const translate = useTranslate();
+  const getContactRepresentation = useGetRecordRepresentation("contacts");
 
   const selectContact = contact_id == null;
   const { data: contact } = useGetOne(
@@ -32,6 +36,7 @@ export const TaskCreateSheet = ({
   );
   const [update] = useUpdate();
   const dataProvider = useDataProvider();
+  const queryClient = useQueryClient();
   const notify = useNotify();
 
   if (!identity) return null;
@@ -43,12 +48,16 @@ export const TaskCreateSheet = ({
       id: referenceRecordId,
     });
     if (!contact) return;
-    update("contacts", {
+    await update("contacts", {
       id: referenceRecordId as unknown as Identifier,
       data: { last_seen: new Date().toISOString() },
       previousData: contact,
     });
-    notify("Task added");
+    queryClient.invalidateQueries({
+      queryKey: ["contacts", "getOne"],
+    });
+
+    notify("resources.tasks.added");
     // No redirect, only close the sheet
     onOpenChange(false);
   };
@@ -58,15 +67,16 @@ export const TaskCreateSheet = ({
       resource="tasks"
       title={
         <h1 className="text-xl font-semibold truncate pr-10">
-          {!selectContact ? "Create Task for " : "Create Task"}
-          {!selectContact && (
-            <RecordRepresentation record={contact} resource="contacts" />
-          )}
+          {!selectContact
+            ? translate("resources.tasks.dialog.create_for", {
+                name: getContactRepresentation(contact!),
+              })
+            : translate("resources.tasks.dialog.create")}
         </h1>
       }
       redirect={false}
       record={{
-        type: "None",
+        type: "none",
         contact_id,
         due_date: new Date().toISOString(),
         sales_id: identity.id,

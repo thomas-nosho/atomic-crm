@@ -54,7 +54,7 @@ export const MobileNavigation = () => {
 
   return (
     <nav
-      aria-label="CRM navigation"
+      aria-label={translate("crm.navigation.label")}
       className="fixed bottom-0 left-0 right-0 z-50 bg-secondary h-14"
       style={{
         // iOS bug: even though viewport is set correctly, the bottom safe area inset is not accounted for
@@ -149,7 +149,7 @@ const CreateButton = () => {
             variant="default"
             size="icon"
             className="h-16 w-16 rounded-full -mt-3"
-            aria-label="Create"
+            aria-label={translate("ra.action.create")}
           >
             <Plus className="size-10" />
           </Button>

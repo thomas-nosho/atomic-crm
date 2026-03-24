@@ -60,7 +60,7 @@ export type Company = {
   zipcode: string;
   city: string;
   state_abbr: string;
-  sales_id?: Identifier | null;
+  sales_id?: Identifier;
   created_at: string;
   description: string;
   revenue: string;
@@ -94,7 +94,7 @@ export type Contact = {
   has_newsletter: boolean;
   tags: Identifier[];
   gender: string;
-  sales_id?: Identifier | null;
+  sales_id?: Identifier;
   status: string;
   background: string;
   phone_jsonb: PhoneNumberAndType[];
@@ -123,7 +123,6 @@ export type Deal = {
   updated_at: string;
   archived_at?: string;
   expected_closing_date: string;
-  trial_start_date?: string;
   sales_id: Identifier;
   index: number;
 } & Pick<RaRecord, "id">;

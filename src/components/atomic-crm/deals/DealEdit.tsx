@@ -1,11 +1,13 @@
 import {
   EditBase,
   Form,
+  useEditContext,
   useNotify,
   useRecordContext,
   useRedirect,
+  useTranslate,
 } from "ra-core";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link } from "react-router";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { ReferenceField } from "@/components/admin/reference-field";
 import { Button } from "@/components/ui/button";
@@ -19,12 +21,9 @@ import { DealInputs } from "./DealInputs";
 export const DealEdit = ({ open, id }: { open: boolean; id?: string }) => {
   const redirect = useRedirect();
   const notify = useNotify();
-  const location = useLocation();
-  const viewMatch = matchPath("/views/:viewId/*", location.pathname);
-  const basePath = viewMatch ? `/views/${viewMatch.params.viewId}` : "/deals";
 
   const handleClose = () => {
-    redirect(basePath, undefined, undefined, undefined, {
+    redirect("/deals", undefined, undefined, undefined, {
       _scrollToTop: false,
     });
   };
@@ -35,12 +34,11 @@ export const DealEdit = ({ open, id }: { open: boolean; id?: string }) => {
         {id ? (
           <EditBase
             id={id}
-            resource="deals"
             mutationMode="pessimistic"
             mutationOptions={{
               onSuccess: () => {
-                notify("Opportunité mise à jour");
-                redirect(`${basePath}/${id}/show`, undefined, undefined, undefined, {
+                notify("resources.deals.updated", {});
+                redirect(`/deals/${id}/show`, undefined, undefined, undefined, {
                   _scrollToTop: false,
                 });
               },
@@ -59,6 +57,8 @@ export const DealEdit = ({ open, id }: { open: boolean; id?: string }) => {
 };
 
 function EditHeader() {
+  const translate = useTranslate();
+  const { defaultTitle } = useEditContext<Deal>();
   const deal = useRecordContext<Deal>();
   if (!deal) {
     return null;
@@ -71,12 +71,14 @@ function EditHeader() {
           <ReferenceField source="company_id" reference="companies" link="show">
             <CompanyAvatar />
           </ReferenceField>
-          <h2 className="text-2xl font-semibold">Edit {deal.name} deal</h2>
+          <h2 className="text-2xl font-semibold">{defaultTitle}</h2>
         </div>
         <div className="flex gap-2 pr-12">
           <DeleteButton />
           <Button asChild variant="outline" className="h-9">
-            <Link to={`/deals/${deal.id}/show`}>Back to deal</Link>
+            <Link to={`/deals/${deal.id}/show`}>
+              {translate("resources.deals.action.back_to_deal")}
+            </Link>
           </Button>
         </div>
       </div>

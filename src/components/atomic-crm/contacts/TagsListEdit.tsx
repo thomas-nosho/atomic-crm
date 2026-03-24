@@ -1,8 +1,8 @@
 import { Edit, Plus } from "lucide-react";
 import {
-  useGetList,
   useGetMany,
   useRecordContext,
+  useTranslate,
   useUpdate,
   type Identifier,
 } from "ra-core";
@@ -18,19 +18,17 @@ import {
 
 import { TagChip } from "../tags/TagChip";
 import { TagCreateModal } from "../tags/TagCreateModal";
+import { useTags } from "../tags/useTags";
 import type { Contact, Tag } from "../types";
 
 export const TagsListEdit = () => {
   const record = useRecordContext<Contact>();
   const [open, setOpen] = useState(false);
+  const translate = useTranslate();
 
-  const { data: allTags, isPending: isPendingAllTags } = useGetList<Tag>(
-    "tags",
-    {
-      pagination: { page: 1, perPage: 10 },
-      sort: { field: "name", order: "ASC" },
-    },
-  );
+  const { data: allTags, isPending: isPendingAllTags } = useTags({
+    perPage: 10,
+  });
   const { data: tags, isPending: isPendingRecordTags } = useGetMany<Tag>(
     "tags",
     { ids: record?.tags },
@@ -117,7 +115,7 @@ export const TagsListEdit = () => {
               className="h-9 md:h-6 cursor-pointer"
             >
               <Plus className="w-4 h-4 md:w-3 md:h-3 mr-1" />
-              Ajouter une étiquette
+              {translate("resources.tags.action.add")}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -144,7 +142,7 @@ export const TagsListEdit = () => {
                 className="w-full justify-start p-0 cursor-pointer text-base md:text-sm"
               >
                 <Edit className="w-4 h-4 md:w-3 md:h-3 mr-2" />
-                Create new tag
+                {translate("resources.tags.action.create")}
               </Button>
             </DropdownMenuItem>
           </DropdownMenuContent>

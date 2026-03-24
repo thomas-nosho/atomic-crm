@@ -1,4 +1,4 @@
-import { useRecordContext } from "ra-core";
+import { useRecordContext, useTranslate } from "ra-core";
 import { EditButton } from "@/components/admin/edit-button";
 import { DeleteButton } from "@/components/admin";
 import { ReferenceManyField } from "@/components/admin/reference-many-field";
@@ -9,67 +9,57 @@ import { TasksIterator } from "../tasks/TasksIterator";
 import { TagsListEdit } from "./TagsListEdit";
 import { ContactPersonalInfo } from "./ContactPersonalInfo";
 import { ContactBackgroundInfo } from "./ContactBackgroundInfo";
-import { ContactEmailHistory } from "./ContactEmailHistory";
-import { ContactCalendarEvents } from "./ContactCalendarEvents";
 import { AsideSection } from "../misc/AsideSection";
 import type { Contact } from "../types";
 import { ContactMergeButton } from "./ContactMergeButton";
 import { ExportVCardButton } from "./ExportVCardButton";
-import { useGoogleConnectionStatus } from "../google/useGoogleConnectionStatus";
 
 export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   const record = useRecordContext<Contact>();
-  const { data: googleStatus } = useGoogleConnectionStatus();
-  const showEmails =
-    googleStatus?.connected && googleStatus.preferences?.showEmailsOnContact;
-  const showCalendar =
-    googleStatus?.connected && googleStatus.preferences?.showCalendarOnContact;
+  const translate = useTranslate();
 
   if (!record) return null;
   return (
     <div className="hidden sm:block w-92 min-w-92 text-sm">
       <div className="mb-4 -ml-1">
         {link === "edit" ? (
-          <EditButton label="Modifier le contact" />
+          <EditButton label="resources.contacts.action.edit" />
         ) : (
-          <ShowButton label="Voir le contact" />
+          <ShowButton label="resources.contacts.action.show" />
         )}
       </div>
 
-      <AsideSection title="Informations personnelles">
+      <AsideSection
+        title={translate("resources.contacts.field_categories.personal_info")}
+      >
         <ContactPersonalInfo />
       </AsideSection>
 
-      <AsideSection title="Informations contextuelles">
+      <AsideSection
+        title={translate("resources.contacts.field_categories.background_info")}
+      >
         <ContactBackgroundInfo />
       </AsideSection>
 
-      <AsideSection title="Étiquettes">
+      <AsideSection
+        title={translate("resources.tags.name", { smart_count: 2 })}
+      >
         <TagsListEdit />
       </AsideSection>
 
-      <AsideSection title="Tâches">
+      <AsideSection
+        title={translate("resources.tasks.name", { smart_count: 2 })}
+      >
         <ReferenceManyField
           target="contact_id"
           reference="tasks"
           sort={{ field: "due_date", order: "ASC" }}
+          perPage={1000}
         >
           <TasksIterator />
         </ReferenceManyField>
         <AddTask />
       </AsideSection>
-
-      {showEmails && (
-        <AsideSection title="Emails">
-          <ContactEmailHistory />
-        </AsideSection>
-      )}
-
-      {showCalendar && (
-        <AsideSection title="Rendez-vous">
-          <ContactCalendarEvents />
-        </AsideSection>
-      )}
 
       {link !== "edit" && (
         <>

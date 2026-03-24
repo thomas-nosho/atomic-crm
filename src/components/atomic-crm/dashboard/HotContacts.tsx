@@ -1,5 +1,5 @@
 import { Plus, Users } from "lucide-react";
-import { useGetIdentity, useGetList } from "ra-core";
+import { useGetIdentity, useGetList, useTranslate } from "ra-core";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import type { Contact } from "../types";
 
 export const HotContacts = () => {
   const { identity } = useGetIdentity();
+  const translate = useTranslate();
   const {
     data: contactData,
     total: contactTotal,
@@ -33,11 +34,11 @@ export const HotContacts = () => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center">
-        <div className="mr-3 flex items-center justify-center w-7 h-7 rounded-lg bg-[var(--nosho-orange)]/10">
-          <Users className="text-[var(--nosho-orange)] w-4 h-4" />
+        <div className="mr-3 flex">
+          <Users className="text-muted-foreground w-6 h-6" />
         </div>
-        <h2 className="text-base font-semibold text-muted-foreground flex-1">
-          Contacts chauds
+        <h2 className="text-xl font-semibold text-muted-foreground">
+          {translate("resources.contacts.hot.title")}
         </h2>
         <TooltipProvider>
           <Tooltip>
@@ -45,19 +46,21 @@ export const HotContacts = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-muted-foreground hover:text-foreground"
+                className="ml-auto text-muted-foreground"
                 asChild
               >
                 <Link to="/contacts/create">
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 text-primary" />
                 </Link>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Créer un contact</TooltipContent>
+            <TooltipContent>
+              {translate("resources.contacts.action.create")}
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
-      <Card className="py-0 shadow-sm border-border/50">
+      <Card className="py-0">
         <SimpleList<Contact>
           linkType="show"
           data={contactData}
@@ -70,18 +73,22 @@ export const HotContacts = () => {
           }
           secondaryText={(contact) => (
             <>
-              {contact.title} at {contact.company_name}
+              {contact.title && contact.company_name
+                ? translate("resources.contacts.position_at_company", {
+                    title: contact.title,
+                    company: contact.company_name,
+                  })
+                : contact.title || contact.company_name}
             </>
           )}
           leftAvatar={(contact) => <Avatar record={contact} />}
           empty={
             <div className="p-4">
               <p className="text-sm mb-4">
-                Les contacts avec le statut &quot;Chaud&quot; apparaissent ici.
+                {translate("resources.contacts.hot.empty_hint")}
               </p>
               <p className="text-sm">
-                Changez le statut via &quot;Options avancées&quot; lors de
-                l&apos;ajout d&apos;une note.
+                {translate("resources.contacts.hot.empty_change_status")}
               </p>
             </div>
           }

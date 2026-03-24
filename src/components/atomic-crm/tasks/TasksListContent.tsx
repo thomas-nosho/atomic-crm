@@ -1,18 +1,17 @@
-import { taskFilters, isBeforeFriday } from "./taskFilters";
-import { TasksListEmpty } from "../dashboard/TasksListEmpty";
-import { TasksListFilter } from "../dashboard/TasksListFilter";
+import { TasksListByDueDate } from "./TasksListByDueDate";
+import { useTranslate } from "ra-core";
 
 export const TasksListContent = () => {
+  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <TasksListEmpty />
-      <TasksListFilter title="En retard" filter={taskFilters.overdue} />
-      <TasksListFilter title="Aujourd'hui" filter={taskFilters.today} />
-      <TasksListFilter title="Demain" filter={taskFilters.tomorrow} />
-      {isBeforeFriday && (
-        <TasksListFilter title="Cette semaine" filter={taskFilters.thisWeek} />
-      )}
-      <TasksListFilter title="Plus tard" filter={taskFilters.later} />
+      <TasksListByDueDate
+        emptyPlaceholder={
+          <p className="text-sm">
+            {translate("resources.tasks.empty_list_hint")}
+          </p>
+        }
+      />
     </div>
   );
 };

@@ -12,7 +12,11 @@ import { ArrayInput } from "@/components/admin/array-input";
 import { SimpleFormIterator } from "@/components/admin/simple-form-iterator";
 
 import { isLinkedinUrl } from "../misc/isLinkedInUrl";
-import { contactGender } from "./contactGender";
+import {
+  contactGender,
+  translateContactGenderLabel,
+  translatePersonalInfoTypeLabel,
+} from "./contactGender";
 import type { Sale } from "../types";
 import { Avatar } from "./Avatar";
 import { AutocompleteCompanyInput } from "../companies/AutocompleteCompanyInput.tsx";
@@ -46,14 +50,17 @@ const ContactIdentityInputs = () => {
   const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">{translate("crm.contact.identity")}</h6>
+      <h6 className="text-lg font-semibold">
+        {translate("resources.contacts.field_categories.identity")}
+      </h6>
       <RadioButtonGroupInput
         label={false}
         row
         source="gender"
         choices={contactGender}
         helperText={false}
-        optionText="label"
+        optionText={(choice) => translateContactGenderLabel(choice, translate)}
+        translateChoice={false}
         optionValue="value"
         defaultValue={contactGender[0].value}
       />
@@ -67,17 +74,34 @@ const ContactPositionInputs = () => {
   const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">{translate("crm.contact.position")}</h6>
+      <h6 className="text-lg font-semibold">
+        {translate("resources.contacts.field_categories.position")}
+      </h6>
       <TextInput source="title" helperText={false} />
       <ReferenceInput source="company_id" reference="companies" perPage={10}>
-        <AutocompleteCompanyInput />
+        <AutocompleteCompanyInput label="resources.contacts.fields.company_id" />
       </ReferenceInput>
     </div>
   );
 };
 
 const ContactPersonalInformationInputs = () => {
+  const translate = useTranslate();
   const { getValues, setValue } = useFormContext();
+  const personalInfoTypes = [
+    {
+      id: "Work",
+      name: translatePersonalInfoTypeLabel("Work", translate),
+    },
+    {
+      id: "Home",
+      name: translatePersonalInfoTypeLabel("Home", translate),
+    },
+    {
+      id: "Other",
+      name: translatePersonalInfoTypeLabel("Other", translate),
+    },
+  ];
 
   // set first and last name based on email
   const handleEmailChange = (email: string) => {
@@ -105,15 +129,12 @@ const ContactPersonalInformationInputs = () => {
     handleEmailChange(email);
   };
 
-  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">{translate("crm.contact.personal_info")}</h6>
-      <ArrayInput
-        source="email_jsonb"
-        label={translate("crm.contact.email_addresses")}
-        helperText={false}
-      >
+      <h6 className="text-lg font-semibold">
+        {translate("resources.contacts.field_categories.personal_info")}
+      </h6>
+      <ArrayInput source="email_jsonb" helperText={false}>
         <SimpleFormIterator
           inline
           disableReordering
@@ -125,7 +146,7 @@ const ContactPersonalInformationInputs = () => {
             className="w-full"
             helperText={false}
             label={false}
-            placeholder="Email…"
+            placeholder={translate("resources.contacts.fields.email")}
             validate={email()}
             onPaste={handleEmailPaste}
             onBlur={handleEmailBlur}
@@ -134,14 +155,14 @@ const ContactPersonalInformationInputs = () => {
             source="type"
             helperText={false}
             label={false}
-            optionText="id"
+            optionText="name"
             choices={personalInfoTypes}
             defaultValue="Work"
             className="w-24 min-w-24"
           />
         </SimpleFormIterator>
       </ArrayInput>
-      <ArrayInput source="phone_jsonb" label={translate("crm.contact.phone_numbers")} helperText={false}>
+      <ArrayInput source="phone_jsonb" helperText={false}>
         <SimpleFormIterator
           inline
           disableReordering
@@ -153,13 +174,13 @@ const ContactPersonalInformationInputs = () => {
             className="w-full"
             helperText={false}
             label={false}
-            placeholder={translate("crm.contact.phone_placeholder")}
+            placeholder={translate("resources.contacts.fields.phone_number")}
           />
           <SelectInput
             source="type"
             helperText={false}
             label={false}
-            optionText="id"
+            optionText="name"
             choices={personalInfoTypes}
             defaultValue="Work"
             className="w-24 min-w-24"
@@ -168,7 +189,6 @@ const ContactPersonalInformationInputs = () => {
       </ArrayInput>
       <TextInput
         source="linkedin_url"
-        label={translate("crm.contact.linkedin_url")}
         helperText={false}
         validate={isLinkedinUrl}
       />
@@ -176,19 +196,14 @@ const ContactPersonalInformationInputs = () => {
   );
 };
 
-const personalInfoTypes = [{ id: "Work" }, { id: "Home" }, { id: "Other" }];
-
 const ContactMiscInputs = () => {
   const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4">
-      <h6 className="text-lg font-semibold">{translate("crm.contact.misc")}</h6>
-      <TextInput
-        source="background"
-        label={translate("crm.contact.background")}
-        multiline
-        helperText={false}
-      />
+      <h6 className="text-lg font-semibold">
+        {translate("resources.contacts.field_categories.misc")}
+      </h6>
+      <TextInput source="background" multiline helperText={false} />
       <BooleanInput source="has_newsletter" helperText={false} />
       <ReferenceInput
         reference="sales"
@@ -200,7 +215,6 @@ const ContactMiscInputs = () => {
       >
         <SelectInput
           helperText={false}
-          label={translate("crm.contact.account_manager")}
           optionText={saleOptionRenderer}
           validate={required()}
         />

@@ -1,9 +1,11 @@
-import { useListContext } from "ra-core";
-import { Fragment, useMemo } from "react";
+import { InfinitePaginationContext } from "ra-core";
+import { Fragment } from "react";
 import { Separator } from "@/components/ui/separator";
 
 import { Note } from "./Note";
 import { NoteCreate } from "./NoteCreate";
+import { InfinitePagination } from "../misc/InfinitePagination";
+import { useAddInfinitePagination } from "./useAddInfinitePagination";
 
 export const NotesIterator = ({
   reference,
@@ -12,37 +14,32 @@ export const NotesIterator = ({
   reference: "contacts" | "deals";
   showStatus?: boolean;
 }) => {
-  const { data, error, isPending } = useListContext();
-
-  // Always show most recent note first
-  const sortedData = useMemo(
-    () =>
-      data
-        ? [...data].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          )
-        : [],
-    [data],
-  );
+  const { infinitePaginationContextValue, isPending, error, data } =
+    useAddInfinitePagination();
 
   if (isPending || error) return null;
+
   return (
-    <div className="mt-4">
-      <NoteCreate reference={reference} showStatus={showStatus} />
-      {sortedData.length > 0 && (
-        <div className="mt-4 space-y-4">
-          {sortedData.map((note, index) => (
-            <Fragment key={note.id ?? index}>
-              <Note
-                note={note}
-                isLast={index === sortedData.length - 1}
-                showStatus={showStatus}
-              />
-              {index < sortedData.length - 1 && <Separator />}
-            </Fragment>
-          ))}
-        </div>
-      )}
-    </div>
+    <InfinitePaginationContext.Provider value={infinitePaginationContextValue}>
+      <div className="mt-4">
+        <NoteCreate reference={reference} showStatus={showStatus} />
+        {data.length && (
+          <div className="mt-4 space-y-4">
+            {data.map((note, index) => (
+              <Fragment key={index}>
+                <Note
+                  note={note}
+                  isLast={index === data.length - 1}
+                  key={index}
+                  showStatus={showStatus}
+                />
+                {index < data.length - 1 && <Separator />}
+              </Fragment>
+            ))}
+          </div>
+        )}
+        <InfinitePagination />
+      </div>
+    </InfinitePaginationContext.Provider>
   );
 };

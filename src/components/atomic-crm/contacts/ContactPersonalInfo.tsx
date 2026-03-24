@@ -1,15 +1,21 @@
-import { useRecordContext, WithRecord } from "ra-core";
+import { useState } from "react";
+import { useRecordContext, useTranslate, WithRecord } from "ra-core";
 import { ArrayField } from "@/components/admin/array-field";
 import { SingleFieldList } from "@/components/admin/single-field-list";
 import { TextField } from "@/components/admin/text-field";
 import { EmailField } from "@/components/admin/email-field";
-import { Mail, Phone, Linkedin } from "lucide-react";
+import { Mail, Phone, Linkedin, Check } from "lucide-react";
 import type { ReactNode } from "react";
-import { contactGender } from "./contactGender";
+import {
+  contactGender,
+  translateContactGenderLabel,
+  translatePersonalInfoTypeLabel,
+} from "./contactGender";
 import type { Contact } from "../types";
 
 export const ContactPersonalInfo = () => {
   const record = useRecordContext<Contact>();
+  const translate = useTranslate();
 
   if (!record) return null;
 
@@ -17,16 +23,13 @@ export const ContactPersonalInfo = () => {
     <div>
       <ArrayField source="email_jsonb">
         <SingleFieldList className="flex-col gap-y-0">
-          <PersonalInfoRow
-            icon={<Mail className="w-4 h-4 text-muted-foreground" />}
-            primary={<EmailField source="email" />}
-          />
+          <EmailRow />
         </SingleFieldList>
       </ArrayField>
 
       {record.has_newsletter && (
         <p className="pl-6 py-1 text-sm text-muted-foreground">
-          Subscribed to newsletter
+          {translate("resources.contacts.fields.has_newsletter")}
         </p>
       )}
 
@@ -64,7 +67,11 @@ export const ContactPersonalInfo = () => {
                 icon={
                   <genderOption.icon className="w-4 h-4 text-muted-foreground" />
                 }
-                primary={<div>{genderOption.label}</div>}
+                primary={
+                  <div>
+                    {translateContactGenderLabel(genderOption, translate)}
+                  </div>
+                }
               />
             );
           }
@@ -72,6 +79,41 @@ export const ContactPersonalInfo = () => {
         })
         .filter(Boolean)}
     </div>
+  );
+};
+
+const EmailRow = () => {
+  const record = useRecordContext<{ email: string }>();
+  const translate = useTranslate();
+  const [copied, setCopied] = useState(false);
+
+  if (!record) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(record.email).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <PersonalInfoRow
+      icon={
+        <button
+          type="button"
+          onClick={handleCopy}
+          title={translate("crm.common.copy")}
+          className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          {copied ? (
+            <Check className="w-4 h-4 text-green-500" />
+          ) : (
+            <Mail className="w-4 h-4" />
+          )}
+        </button>
+      }
+      primary={<EmailField source="email" />}
+    />
   );
 };
 
@@ -83,20 +125,26 @@ const PersonalInfoRow = ({
   icon: ReactNode;
   primary: ReactNode;
   showType?: boolean;
-}) => (
-  <div className="flex flex-row items-center gap-x-2 py-1 min-h-6">
-    {icon}
-    <div className="flex flex-wrap gap-x-2 gap-y-0 text-sm">
-      {primary}
-      {showType ? (
-        <WithRecord
-          render={(row) =>
-            row.type !== "Other" && (
-              <TextField source="type" className="text-muted-foreground" />
-            )
-          }
-        />
-      ) : null}
+}) => {
+  const translate = useTranslate();
+
+  return (
+    <div className="flex flex-row items-center gap-x-2 py-1 min-h-6">
+      {icon}
+      <div className="flex flex-wrap gap-x-2 gap-y-0 text-sm">
+        {primary}
+        {showType ? (
+          <WithRecord
+            render={(row) =>
+              row.type !== "Other" && (
+                <span className="text-muted-foreground">
+                  {translatePersonalInfoTypeLabel(row.type, translate)}
+                </span>
+              )
+            }
+          />
+        ) : null}
+      </div>
     </div>
-  </div>
-);
+  );
+};

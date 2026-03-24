@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { required, useTranslate } from "ra-core";
 import { TextInput } from "@/components/admin/text-input";
 import { FileInput } from "@/components/admin/file-input";
 import { SelectInput } from "@/components/admin/select-input";
@@ -13,7 +13,6 @@ import { getCurrentDate } from "./utils";
 import { AttachmentField } from "./AttachmentField";
 import { foreignKeyMapping } from "./foreignKeyMapping";
 import { AutocompleteInput, ReferenceInput } from "@/components/admin";
-import { required, useTranslate } from "ra-core";
 import { contactOptionText } from "../misc/ContactOption";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -28,10 +27,12 @@ export const NoteInputs = ({
 }) => {
   const isMobile = useIsMobile();
   const { noteStatuses } = useConfigurationContext();
-  const { setValue } = useFormContext();
-  const [displayMore, setDisplayMore] = useState(false);
   const translate = useTranslate();
+  const [displayMore, setDisplayMore] = useState(false);
 
+  // We manually define the input labels because the default ones
+  // would use the resource from the context, which is either "contact_notes" or "deal_notes",
+  // but we want it to be "notes" regardless of the context
   return (
     <div className="space-y-2">
       <TextInput
@@ -39,7 +40,7 @@ export const NoteInputs = ({
         label={false}
         multiline
         helperText={false}
-        placeholder={translate("crm.note.placeholder")}
+        placeholder={translate("resources.notes.inputs.add_note")}
         rows={6}
       />
 
@@ -49,7 +50,11 @@ export const NoteInputs = ({
           reference={reference}
         >
           <AutocompleteInput
-            label={reference === "contacts" ? translate("crm.note.contact") : translate("crm.note.deal")}
+            label={
+              reference === "contacts"
+                ? "resources.notes.fields.contact_id"
+                : "resources.notes.fields.deal_id"
+            }
             optionText={
               reference === "contacts" ? contactOptionText : undefined
             }
@@ -67,14 +72,13 @@ export const NoteInputs = ({
             size="sm"
             onClick={() => {
               setDisplayMore(!displayMore);
-              setValue("date", getCurrentDate());
             }}
             className="text-sm text-muted-foreground underline hover:no-underline p-0 h-auto cursor-pointer"
           >
-            {translate("crm.note.show_options")}
+            {translate("resources.notes.inputs.show_options")}
           </Button>
           <span className="text-sm text-muted-foreground">
-            {translate("crm.note.options_hint")}
+            {translate("resources.notes.inputs.options_hint")}
           </span>
         </div>
       )}
@@ -90,25 +94,30 @@ export const NoteInputs = ({
           {showStatus && (
             <SelectInput
               source="status"
+              label="resources.notes.fields.status"
               choices={noteStatuses.map((status) => ({
                 id: status.value,
                 name: status.label,
                 value: status.value,
               }))}
               optionText={optionRenderer}
-              defaultValue={"warm"}
+              defaultValue="warm"
               helperText={false}
             />
           )}
           <DateTimeInput
             source="date"
-            label="Date"
+            label="resources.notes.fields.date"
             helperText={false}
             className="text-primary"
             defaultValue={getCurrentDate()}
           />
         </div>
-        <FileInput source="attachments" multiple>
+        <FileInput
+          source="attachments"
+          label="resources.notes.fields.attachments"
+          multiple
+        >
           <AttachmentField source="src" title="title" target="_blank" />
         </FileInput>
       </div>

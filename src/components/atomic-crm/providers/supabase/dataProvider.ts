@@ -16,14 +16,6 @@ import type {
   SignUpData,
 } from "../../types";
 import type { ConfigurationContextValue } from "../../root/ConfigurationContext";
-import type {
-  GoogleCalendarEvent,
-  GoogleConnectionStatus,
-  GoogleEmailMessage,
-  GooglePreferences,
-} from "../../google/types";
-import { defaultGooglePreferences } from "../../google/types";
-import { getActivityLog } from "../commons/activity";
 import { ATTACHMENTS_BUCKET } from "../commons/attachments";
 import { getIsInitialized } from "./authProvider";
 import { supabase } from "./supabase";
@@ -69,21 +61,22 @@ const dataProviderWithCustomMethods = {
     if (resource === "contacts") {
       return baseDataProvider.getList("contacts_summary", params);
     }
-    if (resource === "deals" && params.filter?.company_type) {
-      const { company_type, ...restFilter } = params.filter;
-      const { data: companies } = await baseDataProvider.getList("companies", {
-        filter: { type: company_type },
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: "id", order: "ASC" },
-      });
-      const companyIds = companies.map((c) => c.id);
-      if (companyIds.length === 0) {
-        return { data: [], total: 0 };
-      }
-      return baseDataProvider.getList("deals", {
-        ...params,
-        filter: { ...restFilter, "company_id@in": `(${companyIds.join(",")})` },
-      });
+    if (resource === "activity_log") {
+      const { data, total } = await baseDataProvider.getList(
+        "activity_log",
+        params,
+      );
+      // Rename snake_case view columns to camelCase to match Activity type
+      return {
+        data: data.map((row: any) => ({
+          ...row,
+          contactNote: row.contact_note ?? undefined,
+          dealNote: row.deal_note ?? undefined,
+          contact_note: undefined,
+          deal_note: undefined,
+        })),
+        total,
+      };
     }
 
     return baseDataProvider.getList(resource, params);
@@ -177,29 +170,6 @@ const dataProviderWithCustomMethods = {
 
     return updatedData.data;
   },
-  async salesDelete(id: Identifier) {
-    const { data, error } = await supabase.functions.invoke<{ data: Sale }>(
-      "users",
-      {
-        method: "DELETE",
-        body: { sales_id: id },
-      },
-    );
-
-    if (error) {
-      console.error("salesDelete.error", error);
-      const errorDetails = await (async () => {
-        try {
-          return (await error?.context?.json()) ?? {};
-        } catch {
-          return {};
-        }
-      })();
-      throw new Error(errorDetails?.message || "Failed to delete the user");
-    }
-
-    return data?.data ?? ({ id } as any);
-  },
   async updatePassword(id: Identifier) {
     const { data: passwordUpdated, error } =
       await supabase.functions.invoke<boolean>("update_password", {
@@ -241,9 +211,6 @@ const dataProviderWithCustomMethods = {
       ),
     );
   },
-  async getActivityLog(companyId?: Identifier) {
-    return getActivityLog(baseDataProvider, companyId);
-  },
   async isInitialized() {
     return getIsInitialized();
   },
@@ -273,108 +240,6 @@ const dataProviderWithCustomMethods = {
       previousData: { id: 1 },
     });
     return data.config as ConfigurationContextValue;
-  },
-
-  // ── Google Integration ──────────────────────────────────────────
-  async getGoogleStatus() {
-    const { data, error } = await supabase.functions.invoke<{
-      data: GoogleConnectionStatus;
-    }>("google-oauth", {
-      method: "POST",
-      body: { action: "status" },
-    });
-    if (error) throw new Error("Failed to get Google status");
-    return (
-      data?.data ?? {
-        connected: false,
-        email: null,
-        scopes: [],
-        preferences: defaultGooglePreferences,
-      }
-    );
-  },
-  async getGoogleOAuthUrl() {
-    const { data, error } = await supabase.functions.invoke<{
-      data: { url: string; state: string };
-    }>("google-oauth", {
-      method: "POST",
-      body: { action: "get-auth-url" },
-    });
-    if (error) throw new Error("Failed to get Google OAuth URL");
-    return data!.data;
-  },
-  async exchangeGoogleOAuthCode(code: string) {
-    const { data, error } = await supabase.functions.invoke<{
-      data: { connected: boolean; email: string; scopes: string[] };
-    }>("google-oauth", {
-      method: "POST",
-      body: { action: "exchange-code", code },
-    });
-    if (error) throw new Error("Failed to exchange Google OAuth code");
-    return data!.data;
-  },
-  async disconnectGoogle() {
-    const { error } = await supabase.functions.invoke("google-oauth", {
-      method: "POST",
-      body: { action: "disconnect" },
-    });
-    if (error) throw new Error("Failed to disconnect Google");
-  },
-  async revokeGoogle() {
-    const { error } = await supabase.functions.invoke("google-oauth", {
-      method: "POST",
-      body: { action: "revoke" },
-    });
-    if (error) throw new Error("Failed to revoke Google access");
-  },
-  async updateGooglePreferences(preferences: GooglePreferences) {
-    const { error } = await supabase.functions.invoke("google-oauth", {
-      method: "POST",
-      body: { action: "update-preferences", preferences },
-    });
-    if (error) throw new Error("Failed to update Google preferences");
-    return preferences;
-  },
-  async getUpcomingCalendarEvents(params: {
-    timeMin: string;
-    timeMax: string;
-    maxResults?: number;
-  }) {
-    const { data, error } = await supabase.functions.invoke<{
-      data: { events: GoogleCalendarEvent[]; totalResults: number };
-    }>("google-calendar", {
-      method: "POST",
-      body: { action: "list-events", ...params },
-    });
-    if (error) throw new Error("Failed to fetch calendar events");
-    return data!.data;
-  },
-  async getContactEmails(emails: string[], maxResults?: number) {
-    const { data, error } = await supabase.functions.invoke<{
-      data: {
-        messages: GoogleEmailMessage[];
-        nextPageToken: string | null;
-        totalEstimate: number;
-      };
-    }>("google-gmail", {
-      method: "POST",
-      body: { action: "list-messages", emails, maxResults: maxResults ?? 10 },
-    });
-    if (error) throw new Error("Failed to fetch contact emails");
-    return data!.data;
-  },
-  async getContactCalendarEvents(
-    emails: string[],
-    params?: { timeMin?: string; timeMax?: string; maxResults?: number },
-  ) {
-    const { data, error } = await supabase.functions.invoke<{
-      data: { events: GoogleCalendarEvent[]; totalResults: number };
-    }>("google-calendar", {
-      method: "POST",
-      body: { action: "search-by-attendee", emails, ...params },
-    });
-    if (error) throw new Error("Failed to fetch contact calendar events");
-    return data!.data;
   },
 } satisfies DataProvider;
 
@@ -492,73 +357,32 @@ export const dataProvider = withLifecycleCallbacks(
   lifeCycleCallbacks,
 ) as CrmDataProvider;
 
-/**
- * Normalize a search query: strip diacritics (accents) and trim whitespace.
- * "Clément" → "Clement", "léa" → "lea"
- */
-const normalizeSearchQuery = (q: string): string =>
-  q
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .trim();
-
-/**
- * Columns that have a corresponding `_search` generated column in the DB
- * (lowercase + unaccented). Only these get the extra `_search@ilike` filter.
- */
-const SEARCHABLE_COLUMNS = new Set([
-  // companies
-  "name",
-  "city",
-  "state_abbr",
-  // contacts
-  "first_name",
-  "last_name",
-  "title",
-  "background",
-  "company_name",
-  // deals
-  "category",
-  "description",
-]);
-
 const applyFullTextSearch = (columns: string[]) => (params: GetListParams) => {
   if (!params.filter?.q) {
     return params;
   }
   const { q, ...filter } = params.filter;
-  const normalizedQ = normalizeSearchQuery(q);
-
-  // Build OR conditions for a given query term
-  const buildConditions = (term: string) =>
-    columns.reduce(
-      (acc, column) => {
-        if (column === "email") return { ...acc, [`email_fts@ilike`]: term };
-        if (column === "phone") return { ...acc, [`phone_fts@ilike`]: term };
-        const conditions: Record<string, string> = {
-          ...acc,
-          [`${column}@ilike`]: term,
-        };
-        // Only add _search filter for columns that have a generated _search column
-        if (SEARCHABLE_COLUMNS.has(column)) {
-          conditions[`${column}_search@ilike`] = term;
-        }
-        return conditions;
-      },
-      {} as Record<string, string>,
-    );
-
-  // If query has accents, search with both original and normalized terms
-  const orConditions =
-    normalizedQ !== q
-      ? { ...buildConditions(q), ...buildConditions(normalizedQ) }
-      : buildConditions(normalizedQ);
-
   return {
     ...params,
     filter: {
       ...filter,
-      "@or": orConditions,
+      "@or": columns.reduce((acc, column) => {
+        if (column === "email")
+          return {
+            ...acc,
+            [`email_fts@ilike`]: q,
+          };
+        if (column === "phone")
+          return {
+            ...acc,
+            [`phone_fts@ilike`]: q,
+          };
+        else
+          return {
+            ...acc,
+            [`${column}@ilike`]: q,
+          };
+      }, {}),
     },
   };
 };

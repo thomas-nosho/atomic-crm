@@ -1,8 +1,7 @@
-import { useGetList } from "ra-core";
-import { matchPath, useLocation, Link, useNavigate } from "react-router";
+import { useGetList, useTranslate } from "ra-core";
+import { matchPath, useLocation, Link } from "react-router";
 import type { ReactNode } from "react";
-import { Plus } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
+import { CreateButton } from "@/components/admin/create-button";
 import { Progress } from "@/components/ui/progress";
 
 import useAppBarHeight from "../misc/useAppBarHeight";
@@ -10,11 +9,9 @@ import type { Contact } from "../types";
 import { DealCreate } from "./DealCreate";
 
 export const DealEmpty = ({ children }: { children?: ReactNode }) => {
+  const translate = useTranslate();
   const location = useLocation();
   const matchCreate = matchPath("/deals/create", location.pathname);
-  const matchViewCreate = matchPath("/views/:viewId/create", location.pathname);
-  const viewId = matchViewCreate?.params.viewId;
-  const navigate = useNavigate();
   const appbarHeight = useAppBarHeight();
 
   // get Contact data
@@ -34,39 +31,38 @@ export const DealEmpty = ({ children }: { children?: ReactNode }) => {
         height: `calc(100dvh - ${appbarHeight}px)`,
       }}
     >
-      <img src="./img/empty.svg" alt="Aucune opportunité" />
+      <img
+        src="./img/empty.svg"
+        alt={translate("resources.deals.empty.title")}
+      />
       {contacts && contacts.length > 0 ? (
         <>
           <div className="flex flex-col items-center gap-0">
-            <h3 className="text-lg font-bold">No deals found</h3>
+            <h3 className="text-lg font-bold">
+              {translate("resources.deals.empty.title")}
+            </h3>
             <p className="text-sm text-center text-muted-foreground mb-4">
-              It seems your deal list is empty.
+              {translate("resources.deals.empty.description")}
             </p>
           </div>
           <div className="flex space-x-8">
-            <button
-              className={buttonVariants({ variant: "outline" })}
-              onClick={() =>
-                navigate(viewId ? `/views/${viewId}/create` : "/deals/create")
-              }
-            >
-              <Plus />
-              Créer une opportunité
-            </button>
+            <CreateButton label="resources.deals.action.create" />
           </div>
-          <DealCreate open={!!matchCreate || !!matchViewCreate} />
+          <DealCreate open={!!matchCreate} />
           {children}
         </>
       ) : (
         <div className="flex flex-col items-center gap-0">
-          <h3 className="text-lg font-bold">No deals found</h3>
+          <h3 className="text-lg font-bold">
+            {translate("resources.deals.empty.title")}
+          </h3>
           <p className="text-sm text-center text-muted-foreground mb-4">
-            It seems your contact list is empty.
+            {translate("resources.contacts.empty.description")}
             <br />
             <Link to="/contacts/create" className="hover:underline">
-              Add your first contact
+              {translate("resources.contacts.action.add_first")}
             </Link>{" "}
-            before creating a deal.
+            {translate("resources.deals.empty.before_create")}
           </p>
         </div>
       )}

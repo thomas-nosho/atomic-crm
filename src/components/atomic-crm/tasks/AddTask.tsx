@@ -2,9 +2,9 @@ import { Plus } from "lucide-react";
 import {
   CreateBase,
   Form,
-  RecordRepresentation,
   useDataProvider,
   useGetIdentity,
+  useGetRecordRepresentation,
   useNotify,
   useRecordContext,
   useTranslate,
@@ -40,12 +40,13 @@ export const AddTask = ({
   const dataProvider = useDataProvider();
   const [update] = useUpdate();
   const notify = useNotify();
+  const translate = useTranslate();
   const contact = useRecordContext();
   const [open, setOpen] = useState(false);
-  const translate = useTranslate();
   const handleOpen = () => {
     setOpen(true);
   };
+  const getContactRepresentation = useGetRecordRepresentation("contacts");
 
   const handleSuccess = async (data: any) => {
     setOpen(false);
@@ -60,7 +61,7 @@ export const AddTask = ({
       previousData: contact.data,
     });
 
-    notify(translate("crm.task.added"));
+    notify("resources.tasks.added");
   };
 
   if (!identity) return null;
@@ -80,7 +81,9 @@ export const AddTask = ({
                 <Plus className="w-4 h-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>{translate("crm.task.create")}</TooltipContent>
+            <TooltipContent>
+              {translate("resources.tasks.action.create")}
+            </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       ) : (
@@ -92,7 +95,7 @@ export const AddTask = ({
             size="sm"
           >
             <Plus className="w-4 h-4" />
-            {translate("crm.task.add")}
+            {translate("resources.tasks.action.add")}
           </Button>
         </div>
       )}
@@ -100,7 +103,7 @@ export const AddTask = ({
       <CreateBase
         resource="tasks"
         record={{
-          type: "None",
+          type: "none",
           contact_id: contact?.id,
           due_date: new Date().toISOString(),
           sales_id: identity.id,
@@ -113,14 +116,10 @@ export const AddTask = ({
               <DialogHeader>
                 <DialogTitle>
                   {!selectContact
-                    ? translate("crm.task.create_for") + " "
-                    : translate("crm.task.create")}
-                  {!selectContact && (
-                    <RecordRepresentation
-                      record={contact}
-                      resource="contacts"
-                    />
-                  )}
+                    ? translate("resources.tasks.dialog.create_for", {
+                        name: getContactRepresentation(contact!),
+                      })
+                    : translate("resources.tasks.dialog.create")}
                 </DialogTitle>
               </DialogHeader>
               <TaskFormContent selectContact={selectContact} />

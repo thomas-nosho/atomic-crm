@@ -47,15 +47,9 @@ export const DealInputs = () => {
 };
 
 const DealInfoInputs = () => {
-  const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4 flex-1">
-      <TextInput
-        source="name"
-        label={translate("crm.deal.name")}
-        validate={required()}
-        helperText={false}
-      />
+      <TextInput source="name" validate={required()} helperText={false} />
       <TextInput source="description" multiline rows={3} helperText={false} />
     </div>
   );
@@ -84,7 +78,9 @@ const DealLinkedToInputs = ({
 
   return (
     <div className="flex flex-col gap-4 flex-1">
-      <h3 className="text-base font-medium">{translate("crm.deal.linked_to")}</h3>
+      <h3 className="text-base font-medium">
+        {translate("resources.deals.inputs.linked_to")}
+      </h3>
 
       <div className="space-y-1">
         <label className="text-sm font-medium">{translate("crm.deal.view")}</label>
@@ -112,6 +108,7 @@ const DealLinkedToInputs = ({
         filter={companyFilter}
       >
         <AutocompleteCompanyInput
+          label="resources.deals.fields.company_id"
           validate={required()}
           defaultType={companyTypeFilter || undefined}
         />
@@ -119,7 +116,7 @@ const DealLinkedToInputs = ({
 
       <ReferenceArrayInput source="contact_ids" reference="contacts_summary">
         <AutocompleteArrayInput
-          label={translate("crm.deal.associated_contacts")}
+          label="resources.deals.fields.contact_ids"
           optionText={contactOptionText}
           helperText={false}
         />
@@ -133,11 +130,12 @@ const DealMiscInputs = () => {
   const translate = useTranslate();
   return (
     <div className="flex flex-col gap-4 flex-1">
-      <h3 className="text-base font-medium">{translate("crm.deal.misc")}</h3>
+      <h3 className="text-base font-medium">
+        {translate("resources.deals.field_categories.misc")}
+      </h3>
 
       <SelectInput
         source="category"
-        label={translate("crm.deal.category")}
         choices={dealCategories}
         optionText="label"
         optionValue="value"

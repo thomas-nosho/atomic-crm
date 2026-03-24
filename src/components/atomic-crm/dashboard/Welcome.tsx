@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export const Welcome = () => (
   <Card>
     <CardHeader className="px-4">
-      <CardTitle>Votre CRM</CardTitle>
+      <CardTitle>Your CRM Starter Kit</CardTitle>
     </CardHeader>
     <CardContent className="px-4">
       <p className="text-sm mb-4">

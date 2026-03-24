@@ -31,6 +31,7 @@ import {
   dataProvider as defaultDataProvider,
 } from "../providers/supabase";
 import sales from "../sales";
+import { SettingsPageMobile } from "../settings/SettingsPageMobile";
 import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
 import { ConnectorsPage } from "../settings/ConnectorsPage";
@@ -42,6 +43,7 @@ import {
 import type { CrmDataProvider } from "../providers/types";
 import {
   defaultCompanySectors,
+  defaultCurrency,
   defaultDarkModeLogo,
   defaultDealCategories,
   defaultDealPipelineStatuses,
@@ -51,7 +53,7 @@ import {
   defaultTaskTypes,
   defaultTitle,
 } from "./defaultConfiguration";
-import { i18nProvider } from "./i18nProvider";
+import { i18nProvider } from "../providers/commons/i18nProvider";
 import { StartPage } from "../login/StartPage.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
@@ -77,6 +79,7 @@ export type CRMProps = {
  * seeds the store with any custom prop values for backwards compatibility.
  *
  * @param {LabeledValue[]} companySectors - The list of company sectors used in the application.
+ * @param {string} currency - The ISO 4217 currency code used to format monetary values (e.g. "USD", "EUR", "GBP").
  * @param {RaThemeOptions} darkTheme - The theme to use when the application is in dark mode.
  * @param {LabeledValue[]} dealCategories - The categories of deals used in the application.
  * @param {string[]} dealPipelineStatuses - The statuses of deals in the pipeline used in the application.
@@ -110,6 +113,7 @@ export type CRMProps = {
  */
 export const CRM = ({
   companySectors = defaultCompanySectors,
+  currency = defaultCurrency,
   dealCategories = defaultDealCategories,
   dealPipelineStatuses = defaultDealPipelineStatuses,
   dealStages = defaultDealStages,
@@ -146,6 +150,7 @@ export const CRM = ({
   if (!store.getItem(CONFIGURATION_STORE_KEY)) {
     store.setItem(CONFIGURATION_STORE_KEY, {
       companySectors,
+      currency,
       dealCategories,
       dealPipelineStatuses,
       dealStages,
@@ -305,6 +310,12 @@ const MobileAdmin = (props: CoreAdminProps) => {
           <Route
             path={GoogleOAuthCallback.path}
             element={<GoogleOAuthCallback />}
+          />
+        </CustomRoutes>
+        <CustomRoutes>
+          <Route
+            path={SettingsPageMobile.path}
+            element={<SettingsPageMobile />}
           />
         </CustomRoutes>
         <Resource
