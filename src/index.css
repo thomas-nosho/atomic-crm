@@ -1,0 +1,195 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.75rem;
+  /* Nosho Brand Colors */
+  --nosho-orange: #FF9B54;
+  --nosho-orange-light: #FFB980;
+  --nosho-orange-dark: #E8853A;
+  --nosho-green: #92B592;
+  --nosho-green-light: #A8C9A8;
+  --nosho-green-dark: #4AA696;
+  --nosho-teal: #4AA696;
+  --nosho-red: #ED7C3E;
+
+  --background: oklch(0.985 0.002 90);
+  --foreground: oklch(0.205 0.015 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.205 0.015 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.205 0.015 260);
+  --primary: oklch(0.205 0.015 260);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.975 0.003 90);
+  --secondary-foreground: oklch(0.25 0.015 260);
+  --muted: oklch(0.96 0.005 90);
+  --muted-foreground: oklch(0.50 0.01 260);
+  --accent: oklch(0.96 0.005 90);
+  --accent-foreground: oklch(0.25 0.015 260);
+  --destructive: oklch(0.65 0.18 45);
+  --border: oklch(0.93 0.005 90);
+  --input: oklch(0.93 0.005 90);
+  --ring: oklch(0.72 0.10 145);
+  /* Chart colors using Nosho palette */
+  --chart-1: oklch(0.72 0.10 145);
+  --chart-2: oklch(0.75 0.14 55);
+  --chart-3: oklch(0.60 0.12 170);
+  --chart-4: oklch(0.80 0.12 80);
+  --chart-5: oklch(0.65 0.08 260);
+  --sidebar: oklch(0.99 0.002 90);
+  --sidebar-foreground: oklch(0.205 0.015 260);
+  --sidebar-primary: oklch(0.205 0.015 260);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.96 0.005 90);
+  --sidebar-accent-foreground: oklch(0.25 0.015 260);
+  --sidebar-border: oklch(0.93 0.005 90);
+  --sidebar-ring: oklch(0.72 0.10 145);
+  --avatar-0: oklch(0.85 0.08 240);
+  --avatar-1: oklch(0.88 0.1 340);
+  --avatar-2: oklch(0.85 0.07 180);
+  --avatar-3: oklch(0.9 0.09 40);
+  --avatar-4: oklch(0.87 0.08 300);
+  --avatar-5: oklch(0.85 0.08 150);
+  --avatar-6: oklch(0.87 0.08 200);
+  --avatar-7: oklch(0.88 0.09 10);
+  --avatar-8: oklch(0.92 0.08 80);
+  --avatar-9: oklch(0.86 0.09 270);
+}
+
+.dark {
+  --background: oklch(0.16 0.01 260);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.22 0.01 260);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.22 0.01 260);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.28 0.01 260);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.28 0.01 260);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.28 0.01 260);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 15%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.65 0.10 145);
+  --chart-1: oklch(0.65 0.10 145);
+  --chart-2: oklch(0.70 0.14 55);
+  --chart-3: oklch(0.55 0.12 170);
+  --chart-4: oklch(0.75 0.12 80);
+  --chart-5: oklch(0.60 0.08 260);
+  --sidebar: oklch(0.22 0.01 260);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.65 0.10 145);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.28 0.01 260);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.65 0.10 145);
+  --avatar-0: oklch(0.35 0.12 240);
+  --avatar-1: oklch(0.38 0.14 340);
+  --avatar-2: oklch(0.35 0.11 180);
+  --avatar-3: oklch(0.38 0.13 40);
+  --avatar-4: oklch(0.36 0.12 300);
+  --avatar-5: oklch(0.35 0.11 150);
+  --avatar-6: oklch(0.37 0.12 200);
+  --avatar-7: oklch(0.38 0.14 10);
+  --avatar-8: oklch(0.4 0.11 80);
+  --avatar-9: oklch(0.36 0.13 270);
+}
+
+a,
+button {
+  cursor: pointer;
+}
+
+input {
+  cursor: text;
+}
+
+/* Prevent mobile zoom on input focus by ensuring 16px minimum font size */
+@media screen and (max-width: 768px) {
+  html {
+    font-size: 17px;
+  }
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
+a[aria-disabled="true"],
+button[aria-disabled="true"],
+button:disabled,
+input[aria-disabled="true"],
+input:disabled {
+  cursor: not-allowed;
+}
+
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"] {
+  position: relative;
+}
+
+.dark ::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  position: absolute;
+  right: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
