@@ -127,12 +127,15 @@ jobs:
                   cache: npm
 
             - name: ⚙️ Setup git
+              env:
+                  DEPLOY_REPO: ${{ vars.DEPLOY_REPOSITORY }}
               run: |
-                  echo Deploying to pages to ${{ vars.DEPLOY_REPOSITORY }}
-                  git remote set-url origin https://git:${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ vars.DEPLOY_REPOSITORY }}
-                  git remote add production $PRODUCTION_REMOTE
                   git config --global user.email support+actions@github.com
                   git config --global user.name github-actions-bot
+                  if [ -n "$DEPLOY_REPO" ]; then
+                    git remote set-url origin https://git:${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}@github.com/$DEPLOY_REPO
+                    git remote add production $PRODUCTION_REMOTE
+                  fi
 
             - name: ⚙️ Setup supabase
               uses: supabase/setup-cli@v1
