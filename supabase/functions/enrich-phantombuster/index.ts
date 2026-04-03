@@ -5,33 +5,25 @@ import { AuthMiddleware } from "../_shared/authentication.ts";
 const PB_BASE = "https://api.phantombuster.com/api/v2";
 
 async function handler(req: Request): Promise<Response> {
-  const apiKey = Deno.env.get("PHANTOMBUSTER_API_KEY");
-  if (!apiKey) {
-    console.error("[enrich-phantombuster] PHANTOMBUSTER_API_KEY secret is not set");
-    return new Response(
-      JSON.stringify({ error: "PHANTOMBUSTER_API_KEY not configured" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  }
-
-  let body: { linkedinUrl: string; agentId: string };
+  let body: { apiKey: string; linkedinUrl: string; agentId: string };
   try {
     body = await req.json();
   } catch (e) {
     console.error("[enrich-phantombuster] Failed to parse request body:", e);
-    return new Response(
-      JSON.stringify({ error: "Invalid JSON body" }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
-  const { linkedinUrl, agentId } = body;
+  const { apiKey, linkedinUrl, agentId } = body;
+
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "apiKey is required" }), {
+      status: 400,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   if (!linkedinUrl || !agentId) {
     console.warn("[enrich-phantombuster] Missing linkedinUrl or agentId");
@@ -44,7 +36,12 @@ async function handler(req: Request): Promise<Response> {
     );
   }
 
-  console.log("[enrich-phantombuster] Launching agent:", agentId, "for", linkedinUrl);
+  console.log(
+    "[enrich-phantombuster] Launching agent:",
+    agentId,
+    "for",
+    linkedinUrl,
+  );
 
   // Step 1: Launch the phantom
   const launchRes = await fetch(`${PB_BASE}/agents/launch`, {
@@ -64,7 +61,10 @@ async function handler(req: Request): Promise<Response> {
 
   if (!launchRes.ok) {
     const text = await launchRes.text();
-    console.error(`[enrich-phantombuster] Launch error ${launchRes.status}:`, text);
+    console.error(
+      `[enrich-phantombuster] Launch error ${launchRes.status}:`,
+      text,
+    );
     return new Response(
       JSON.stringify({
         error: `PhantomBuster launch error: ${launchRes.status}`,
@@ -91,12 +91,17 @@ async function handler(req: Request): Promise<Response> {
     );
 
     if (!pollRes.ok) {
-      console.warn(`[enrich-phantombuster] Poll ${i + 1} failed: ${pollRes.status}`);
+      console.warn(
+        `[enrich-phantombuster] Poll ${i + 1} failed: ${pollRes.status}`,
+      );
       continue;
     }
 
     const pollData = await pollRes.json();
-    console.log(`[enrich-phantombuster] Poll ${i + 1} status:`, pollData.status);
+    console.log(
+      `[enrich-phantombuster] Poll ${i + 1} status:`,
+      pollData.status,
+    );
     if (pollData.status === "finished" || pollData.status === "error") {
       result = pollData;
       break;
@@ -104,7 +109,10 @@ async function handler(req: Request): Promise<Response> {
   }
 
   if (!result) {
-    console.error("[enrich-phantombuster] Timeout after 60s waiting for container:", containerId);
+    console.error(
+      "[enrich-phantombuster] Timeout after 60s waiting for container:",
+      containerId,
+    );
     return new Response(
       JSON.stringify({ error: "Timeout waiting for PhantomBuster result" }),
       {
@@ -132,7 +140,9 @@ async function handler(req: Request): Promise<Response> {
   );
 
   if (!outputRes.ok) {
-    console.error(`[enrich-phantombuster] Fetch output error ${outputRes.status}`);
+    console.error(
+      `[enrich-phantombuster] Fetch output error ${outputRes.status}`,
+    );
     return new Response(
       JSON.stringify({ error: "Failed to fetch agent output" }),
       {
@@ -146,7 +156,10 @@ async function handler(req: Request): Promise<Response> {
   // outputData.output is a signed S3 URL to the JSON result
   const s3Url = outputData.output;
   if (!s3Url) {
-    console.error("[enrich-phantombuster] No S3 output URL in response:", outputData);
+    console.error(
+      "[enrich-phantombuster] No S3 output URL in response:",
+      outputData,
+    );
     return new Response(
       JSON.stringify({ error: "No output URL in response" }),
       {

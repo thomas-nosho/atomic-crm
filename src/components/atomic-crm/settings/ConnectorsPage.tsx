@@ -1,10 +1,13 @@
 import { useCallback, useState } from "react";
 import { useDataProvider, useNotify } from "ra-core";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   CheckCircle2,
   ExternalLink,
   Loader2,
   LogOut,
+  Pencil,
   Plug,
   ShieldOff,
   Calendar,
@@ -17,7 +20,6 @@ import {
   Trash2,
   RefreshCw,
   Upload,
-  AlertCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +42,7 @@ import type { GooglePreferences } from "../google/types";
 const CONNECTORS = [
   { id: "google", label: "Google Workspace" },
   { id: "dropcontact", label: "Dropcontact" },
+  { id: "phantombuster", label: "PhantomBuster" },
   { id: "lemlist", label: "Lemlist" },
 ];
 
@@ -72,6 +75,8 @@ export const ConnectorsPage = () => {
         <GoogleConnectorCard />
 
         <DropcontactConnectorCard />
+
+        <PhantomBusterConnectorCard />
 
         <ComingSoonCard
           id="lemlist"
@@ -156,21 +161,15 @@ const GoogleConnectorCard = () => {
   const handleExportContacts = useCallback(async () => {
     setExporting(true);
     try {
-      const result = await dataProvider.exportGoogleContacts();
+      const result = await dataProvider.exportContactsToGoogle();
       notify(
-        `Export terminé : ${result.created} contact(s) ajouté(s) dans Google`,
+        `Export terminé : ${result.created} créé(s), ${result.updated} mis à jour`,
         { type: "success" },
       );
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "";
-      if (msg === "GOOGLE_CONTACTS_WRITE_REQUIRED") {
-        notify(
-          "Reconnectez votre compte Google pour autoriser l'écriture de contacts",
-          { type: "warning" },
-        );
-      } else {
-        notify("Erreur lors de l'export des contacts", { type: "error" });
-      }
+    } catch {
+      notify("Erreur lors de l'export des contacts vers Google", {
+        type: "error",
+      });
     } finally {
       setExporting(false);
     }
@@ -302,6 +301,38 @@ const GoogleConnectorCard = () => {
           </div>
         )}
 
+        {/* Re-auth banner */}
+        {connected && status?.needsReauth && (
+          <>
+            <Separator />
+            <div className="flex items-start gap-3 rounded-md border border-orange-200 bg-orange-50 px-4 py-3 dark:border-orange-800 dark:bg-orange-950">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-orange-500" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+                  Reconnexion requise
+                </p>
+                <p className="text-xs text-orange-700 dark:text-orange-400">
+                  Pour exporter les contacts vers Google, vous devez reconnecter
+                  votre compte avec les nouvelles autorisations.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleConnect}
+                disabled={connecting}
+                className="shrink-0 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300"
+              >
+                {connecting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Reconnecter"
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+
         {/* Preferences (only shown when connected) */}
         {connected && preferences && (
           <>
@@ -364,49 +395,33 @@ const GoogleConnectorCard = () => {
                     ) : (
                       <RefreshCw className="h-4 w-4 mr-1" />
                     )}
-                    Importer depuis Google
+                    Synchroniser maintenant
                   </Button>
                 </div>
               )}
 
-              <Separator />
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Export
-              </h3>
-
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex gap-3">
-                  <div className="mt-0.5 text-muted-foreground">
-                    <Upload className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-normal">
-                      Exporter les contacts CRM vers Google
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Pousse vos contacts CRM dans Google Contacts (les doublons
-                      sont ignorés)
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportContacts}
-                  disabled={exporting || !hasContactsWriteScope}
-                >
-                  {exporting ? (
-                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4 mr-1" />
-                  )}
-                  Exporter
-                </Button>
-              </div>
-              {!hasContactsWriteScope && (
-                <div className="ml-7 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
-                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                  Reconnectez votre compte Google pour activer l'export
+              <PreferenceToggle
+                icon={<Upload className="h-4 w-4" />}
+                label="Exporter les contacts CRM vers Google"
+                description="Pousse tous les contacts du CRM vers Google Contacts (téléphone, email, société)"
+                checked={preferences.exportContacts}
+                onChange={(v) => handlePreferenceChange("exportContacts", v)}
+              />
+              {preferences.exportContacts && (
+                <div className="ml-7">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportContacts}
+                    disabled={exporting || status?.needsReauth}
+                  >
+                    {exporting ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-1" />
+                    )}
+                    Exporter vers Google maintenant
+                  </Button>
                 </div>
               )}
             </div>
@@ -447,10 +462,13 @@ const PreferenceToggle = ({
 const DropcontactConnectorCard = () => {
   const config = useConfigurationContext();
   const updateConfig = useConfigurationUpdater();
+  const dataProvider = useDataProvider<CrmDataProvider>();
+  const queryClient = useQueryClient();
   const notify = useNotify();
 
   const [apiKey, setApiKey] = useState(config.dropcontactApiKey ?? "");
   const [showKey, setShowKey] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const connected = Boolean(config.dropcontactApiKey);
@@ -458,20 +476,35 @@ const DropcontactConnectorCard = () => {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      updateConfig({ ...config, dropcontactApiKey: apiKey.trim() });
+      const newConfig = { ...config, dropcontactApiKey: apiKey.trim() };
+      await dataProvider.updateConfiguration(newConfig);
+      queryClient.setQueryData(["configuration"], newConfig);
+      updateConfig(newConfig);
+      setEditing(false);
       notify("Clé API Dropcontact enregistrée", { type: "success" });
     } catch {
       notify("Erreur lors de l'enregistrement", { type: "error" });
     } finally {
       setSaving(false);
     }
-  }, [apiKey, config, updateConfig, notify]);
+  }, [apiKey, config, dataProvider, queryClient, updateConfig, notify]);
 
-  const handleDisconnect = useCallback(() => {
-    setApiKey("");
-    updateConfig({ ...config, dropcontactApiKey: undefined });
-    notify("Dropcontact déconnecté");
-  }, [config, updateConfig, notify]);
+  const handleDisconnect = useCallback(async () => {
+    setSaving(true);
+    try {
+      const newConfig = { ...config, dropcontactApiKey: undefined };
+      await dataProvider.updateConfiguration(newConfig);
+      queryClient.setQueryData(["configuration"], newConfig);
+      updateConfig(newConfig);
+      setApiKey("");
+      setEditing(false);
+      notify("Dropcontact déconnecté");
+    } catch {
+      notify("Erreur lors de la déconnexion", { type: "error" });
+    } finally {
+      setSaving(false);
+    }
+  }, [config, dataProvider, queryClient, updateConfig, notify]);
 
   return (
     <Card id="dropcontact">
@@ -481,11 +514,14 @@ const DropcontactConnectorCard = () => {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
               <img
-                src="https://www.dropcontact.com/favicon.ico"
+                src="https://logo.clearbit.com/dropcontact.com"
                 alt="Dropcontact"
-                className="w-6 h-6"
+                className="w-8 h-8 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  el.parentElement!.innerHTML =
+                    '<span class="text-sm font-bold text-blue-600">DC</span>';
                 }}
               />
             </div>
@@ -528,51 +564,82 @@ const DropcontactConnectorCard = () => {
             <Key className="w-3.5 h-3.5" />
             Clé API
           </Label>
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Input
-                id="dc-api-key"
-                type={showKey ? "text" : "password"}
-                placeholder="Votre clé API Dropcontact…"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="pr-9"
-              />
-              <button
-                type="button"
-                onClick={() => setShowKey((v) => !v)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                tabIndex={-1}
+          {connected && !editing ? (
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center px-3 py-2 rounded-md border bg-muted/40 text-sm font-mono tracking-widest text-muted-foreground">
+                {"••••••••••••" + config.dropcontactApiKey!.slice(-4)}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditing(true)}
               >
-                {showKey ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saving || !apiKey.trim()}
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Save className="w-4 h-4" />
-              )}
-            </Button>
-            {connected && (
+                <Pencil className="w-4 h-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleDisconnect}
+                disabled={saving}
                 className="text-destructive hover:text-destructive"
               >
-                <Trash2 className="w-4 h-4" />
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
               </Button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="dc-api-key"
+                  type={showKey ? "text" : "password"}
+                  placeholder="Votre clé API Dropcontact…"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="pr-9"
+                  autoFocus={editing}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowKey((v) => !v)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showKey ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={saving || !apiKey.trim()}
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+              </Button>
+              {editing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setApiKey(config.dropcontactApiKey ?? "");
+                    setEditing(false);
+                  }}
+                >
+                  Annuler
+                </Button>
+              )}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             Trouvez votre clé sur{" "}
             <a
@@ -623,6 +690,270 @@ const DropcontactConnectorCard = () => {
               <p className="text-xs text-muted-foreground">
                 Bouton <span className="font-medium">✨ Enrichir</span>{" "}
                 disponible sur chaque fiche contact et société.
+              </p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+// ── PhantomBuster Connector ───────────────────────────────────────
+
+const PhantomBusterConnectorCard = () => {
+  const config = useConfigurationContext();
+  const updateConfig = useConfigurationUpdater();
+  const dataProvider = useDataProvider<CrmDataProvider>();
+  const queryClient = useQueryClient();
+  const notify = useNotify();
+
+  const [apiKey, setApiKey] = useState(config.phantombusterApiKey ?? "");
+  const [agentId, setAgentId] = useState(config.phantombusterAgentId ?? "");
+  const [showKey, setShowKey] = useState(false);
+  const [editingKey, setEditingKey] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const connected = Boolean(config.phantombusterApiKey);
+
+  const handleSave = useCallback(async () => {
+    if (!apiKey.trim()) return;
+    setSaving(true);
+    try {
+      const newConfig = {
+        ...config,
+        phantombusterApiKey: apiKey.trim(),
+        phantombusterAgentId: agentId.trim(),
+      };
+      await dataProvider.updateConfiguration(newConfig);
+      queryClient.setQueryData(["configuration"], newConfig);
+      updateConfig(newConfig);
+      setEditingKey(false);
+      notify("Configuration PhantomBuster enregistrée", { type: "success" });
+    } catch {
+      notify("Erreur lors de l'enregistrement", { type: "error" });
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    apiKey,
+    agentId,
+    config,
+    dataProvider,
+    queryClient,
+    updateConfig,
+    notify,
+  ]);
+
+  const handleDisconnect = useCallback(async () => {
+    setSaving(true);
+    try {
+      const newConfig = {
+        ...config,
+        phantombusterApiKey: undefined,
+        phantombusterAgentId: undefined,
+      };
+      await dataProvider.updateConfiguration(newConfig);
+      queryClient.setQueryData(["configuration"], newConfig);
+      updateConfig(newConfig);
+      setApiKey("");
+      setAgentId("");
+      setEditingKey(false);
+      notify("PhantomBuster déconnecté");
+    } catch {
+      notify("Erreur lors de la déconnexion", { type: "error" });
+    } finally {
+      setSaving(false);
+    }
+  }, [config, dataProvider, queryClient, updateConfig, notify]);
+
+  return (
+    <Card id="phantombuster">
+      <CardContent className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
+              <img
+                src="https://logo.clearbit.com/phantombuster.com"
+                alt="PhantomBuster"
+                className="w-8 h-8 object-contain"
+                onError={(e) => {
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  el.parentElement!.innerHTML =
+                    '<span class="text-sm font-bold text-orange-500">PB</span>';
+                }}
+              />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">PhantomBuster</h2>
+              <p className="text-sm text-muted-foreground">
+                Scraping LinkedIn — enrichissement sociétés
+              </p>
+            </div>
+          </div>
+          {connected ? (
+            <Badge
+              variant="outline"
+              className="text-green-700 border-green-300 bg-green-50 dark:text-green-400 dark:border-green-800 dark:bg-green-950"
+            >
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Connecté
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-muted-foreground">
+              Non connecté
+            </Badge>
+          )}
+        </div>
+
+        <Separator />
+
+        <p className="text-sm text-muted-foreground">
+          Enrichissez vos sociétés via LinkedIn grâce à un agent PhantomBuster
+          "LinkedIn Company Scraper". Nécessite une URL LinkedIn sur la fiche
+          société.
+        </p>
+
+        {/* API Key */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-1.5">
+            <Key className="w-3.5 h-3.5" />
+            Clé API
+          </Label>
+          {connected && !editingKey ? (
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center px-3 py-2 rounded-md border bg-muted/40 text-sm font-mono tracking-widest text-muted-foreground">
+                {"••••••••••••" + config.phantombusterApiKey!.slice(-4)}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingKey(true)}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDisconnect}
+                disabled={saving}
+                className="text-destructive hover:text-destructive"
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          ) : (
+            <div className="relative flex-1">
+              <Input
+                type={showKey ? "text" : "password"}
+                placeholder="Votre clé API PhantomBuster…"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="pr-9"
+                autoFocus={editingKey}
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey((v) => !v)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                tabIndex={-1}
+              >
+                {showKey ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Trouvez votre clé sur{" "}
+            <a
+              href="https://phantombuster.com/me"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:no-underline inline-flex items-center gap-0.5"
+            >
+              phantombuster.com/me
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </p>
+        </div>
+
+        {/* Agent ID */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium flex items-center gap-1.5">
+            <Key className="w-3.5 h-3.5" />
+            ID de l'agent LinkedIn Company Scraper
+          </Label>
+          {connected && !editingKey ? (
+            <div className="flex-1 flex items-center px-3 py-2 rounded-md border bg-muted/40 text-sm font-mono text-muted-foreground">
+              {config.phantombusterAgentId}
+            </div>
+          ) : (
+            <Input
+              placeholder="Ex: 1234567890"
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+            />
+          )}
+          <p className="text-xs text-muted-foreground">
+            Trouvez l'ID dans l'URL de votre Phantom :{" "}
+            <span className="font-mono">phantombuster.com/phantoms/ID/…</span>
+          </p>
+        </div>
+
+        {(!connected || editingKey) && (
+          <div className="flex gap-2">
+            <Button onClick={handleSave} disabled={saving || !apiKey.trim()}>
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Enregistrer
+            </Button>
+            {editingKey && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setApiKey(config.phantombusterApiKey ?? "");
+                  setAgentId(config.phantombusterAgentId ?? "");
+                  setEditingKey(false);
+                }}
+              >
+                Annuler
+              </Button>
+            )}
+          </div>
+        )}
+
+        {connected && (
+          <>
+            <Separator />
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Ce que PhantomBuster peut enrichir
+              </h3>
+              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                  Description société
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                  Site web
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Bouton <span className="font-medium">✨ Enrichir</span>{" "}
+                disponible sur chaque fiche société avec une URL LinkedIn.
               </p>
             </div>
           </>

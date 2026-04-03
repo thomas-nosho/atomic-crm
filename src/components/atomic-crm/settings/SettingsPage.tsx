@@ -1,6 +1,13 @@
 import { RotateCcw, Save, Trash2, Users, Globe } from "lucide-react";
 import type { RaRecord } from "ra-core";
-import { EditBase, Form, useGetList, useInput, useNotify } from "ra-core";
+import {
+  EditBase,
+  Form,
+  useGetList,
+  useInput,
+  useNotify,
+  useStore,
+} from "ra-core";
 import { useCallback, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -13,6 +20,7 @@ import { TextInput } from "@/components/admin/text-input";
 
 import ImageEditorField from "../misc/ImageEditorField";
 import {
+  CONFIGURATION_STORE_KEY,
   useConfigurationContext,
   useConfigurationUpdater,
   useCustomViewsStore,
@@ -80,6 +88,12 @@ export const SettingsPage = () => {
   const notify = useNotify();
   const [customViews] = useCustomViewsStore();
   const { companyTypes } = useConfigurationContext();
+  // Read raw stored config to preserve connector API keys (dropcontact, phantombuster)
+  // without causing form re-renders when merged config reference changes.
+  const [rawConfig] = useStore<Partial<ConfigurationContextValue>>(
+    CONFIGURATION_STORE_KEY,
+    {},
+  );
 
   const transform = useCallback(
     (data: Record<string, any>) => ({
@@ -95,9 +109,19 @@ export const SettingsPage = () => {
         noteStatuses: ensureValues(data.noteStatuses),
         customViews,
         companyTypes,
+        // Preserve connector keys so saving settings doesn't wipe them
+        ...(rawConfig.dropcontactApiKey
+          ? { dropcontactApiKey: rawConfig.dropcontactApiKey }
+          : {}),
+        ...(rawConfig.phantombusterApiKey
+          ? { phantombusterApiKey: rawConfig.phantombusterApiKey }
+          : {}),
+        ...(rawConfig.phantombusterAgentId
+          ? { phantombusterAgentId: rawConfig.phantombusterAgentId }
+          : {}),
       } as ConfigurationContextValue,
     }),
-    [customViews, companyTypes],
+    [customViews, companyTypes, rawConfig],
   );
 
   return (
@@ -221,7 +245,9 @@ const SettingsFormFields = () => {
             <TextInput source="title" label="Titre de l'application" />
             <div className="flex gap-8">
               <div className="flex flex-col items-center gap-1">
-                <p className="text-sm text-muted-foreground">Logo (mode clair)</p>
+                <p className="text-sm text-muted-foreground">
+                  Logo (mode clair)
+                </p>
                 <ImageEditorField
                   source="lightModeLogo"
                   width={100}
@@ -231,7 +257,9 @@ const SettingsFormFields = () => {
                 />
               </div>
               <div className="flex flex-col items-center gap-1">
-                <p className="text-sm text-muted-foreground">Logo (mode sombre)</p>
+                <p className="text-sm text-muted-foreground">
+                  Logo (mode sombre)
+                </p>
                 <ImageEditorField
                   source="darkModeLogo"
                   width={100}
@@ -550,7 +578,8 @@ const CustomViewsSection = () => {
                         const isAllowed =
                           isOpenToAll ||
                           view.allowedUserIds?.includes(sale.id as number);
-                        const initials = `${sale.first_name?.[0] ?? ""}${sale.last_name?.[0] ?? ""}`.toUpperCase();
+                        const initials =
+                          `${sale.first_name?.[0] ?? ""}${sale.last_name?.[0] ?? ""}`.toUpperCase();
                         return (
                           <button
                             key={sale.id}

@@ -274,12 +274,12 @@ const getDataProviderWithCustomMethods = () => {
     async updateConfiguration(
       config: ConfigurationContextValue,
     ): Promise<ConfigurationContextValue> {
-      const { data } = await baseDataProvider.update("configuration", {
-        id: 1,
-        data: { config },
-        previousData: { id: 1 },
-      });
-      return data.config as ConfigurationContextValue;
+      const { error } = await getSupabaseClient()
+        .from("configuration")
+        .update({ config })
+        .eq("id", 1);
+      if (error) throw error;
+      return config;
     },
 
     // ── Google Integration ──────────────────────────────────────────
@@ -366,20 +366,19 @@ const getDataProviderWithCustomMethods = () => {
       if (error) throw new Error("Failed to sync Google contacts");
       return data!.data;
     },
-    async exportGoogleContacts() {
+    async exportContactsToGoogle() {
       const { data, error } = await getSupabaseClient().functions.invoke<{
-        data: { total: number; created: number; skipped: number };
-      }>("google-contacts-sync", {
+        data: {
+          total: number;
+          created: number;
+          updated: number;
+          skipped: number;
+        };
+      }>("google-contacts-export", {
         method: "POST",
-        body: { action: "export-to-google" },
+        body: { action: "export" },
       });
-      if (error) {
-        const msg = (error as any)?.message ?? "";
-        if (msg.includes("GOOGLE_CONTACTS_WRITE_REQUIRED")) {
-          throw new Error("GOOGLE_CONTACTS_WRITE_REQUIRED");
-        }
-        throw new Error("Failed to export contacts to Google");
-      }
+      if (error) throw new Error("Failed to export contacts to Google");
       return data!.data;
     },
     async getUpcomingCalendarEvents(params: {

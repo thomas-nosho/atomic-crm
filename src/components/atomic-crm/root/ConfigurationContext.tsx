@@ -31,6 +31,8 @@ export interface ConfigurationContextValue {
   googleWorkplaceDomain?: string;
   disableEmailPasswordAuthentication?: boolean;
   dropcontactApiKey?: string;
+  phantombusterApiKey?: string;
+  phantombusterAgentId?: string;
 }
 
 export const useConfigurationContext = () => {

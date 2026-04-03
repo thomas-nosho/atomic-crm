@@ -134,6 +134,7 @@ async function exchangeCode(userId: string, salesId: number, code: string) {
         showEmailsOnContact: true,
         showCalendarOnContact: true,
         syncContacts: false,
+        exportContacts: false,
       },
     },
     { onConflict: "user_id,connector_type" },
@@ -192,13 +193,19 @@ async function getStatus(userId: string) {
     .eq("connector_type", "google")
     .single();
 
+  const needsReauth =
+    status.connected &&
+    !status.scopes.includes("https://www.googleapis.com/auth/contacts");
+
   return {
     ...status,
+    needsReauth,
     preferences: prefs?.preferences ?? {
       showCalendarOnDashboard: true,
       showEmailsOnContact: true,
       showCalendarOnContact: true,
       syncContacts: false,
+      exportContacts: false,
     },
   };
 }
