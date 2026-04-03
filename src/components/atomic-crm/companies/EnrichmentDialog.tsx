@@ -484,14 +484,32 @@ const PhantomBusterTab = ({
     );
   };
 
-  if (!phantombusterApiKey || !phantombusterAgentId) {
+  if (!phantombusterApiKey) {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center text-sm text-muted-foreground">
         <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
         <p>
           PhantomBuster n'est pas configuré.
           <br />
-          Ajoutez votre clé API et votre agent dans{" "}
+          Ajoutez votre clé API dans{" "}
+          <a
+            href="#/connectors"
+            className="underline hover:no-underline font-medium text-foreground"
+          >
+            Paramètres → Connecteurs
+          </a>
+          .
+        </p>
+      </div>
+    );
+  }
+
+  if (!phantombusterAgentId) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6 text-center text-sm text-muted-foreground">
+        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
+        <p>
+          Ajoutez l'ID de l'agent LinkedIn Company Scraper dans{" "}
           <a
             href="#/connectors"
             className="underline hover:no-underline font-medium text-foreground"

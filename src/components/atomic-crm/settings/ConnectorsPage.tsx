@@ -434,11 +434,14 @@ const DropcontactConnectorCard = () => {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
               <img
-                src="https://www.dropcontact.com/favicon.ico"
+                src="https://logo.clearbit.com/dropcontact.com"
                 alt="Dropcontact"
-                className="w-6 h-6"
+                className="w-8 h-8 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  el.parentElement!.innerHTML =
+                    '<span class="text-sm font-bold text-blue-600">DC</span>';
                 }}
               />
             </div>
@@ -631,12 +634,10 @@ const PhantomBusterConnectorCard = () => {
   const [editingKey, setEditingKey] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const connected = Boolean(
-    config.phantombusterApiKey && config.phantombusterAgentId,
-  );
+  const connected = Boolean(config.phantombusterApiKey);
 
   const handleSave = useCallback(async () => {
-    if (!apiKey.trim() || !agentId.trim()) return;
+    if (!apiKey.trim()) return;
     setSaving(true);
     try {
       const newConfig = {
@@ -694,11 +695,14 @@ const PhantomBusterConnectorCard = () => {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-white border flex items-center justify-center overflow-hidden">
               <img
-                src="https://www.phantombuster.com/favicon.ico"
+                src="https://logo.clearbit.com/phantombuster.com"
                 alt="PhantomBuster"
-                className="w-6 h-6"
+                className="w-8 h-8 object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
+                  const el = e.target as HTMLImageElement;
+                  el.style.display = "none";
+                  el.parentElement!.innerHTML =
+                    '<span class="text-sm font-bold text-orange-500">PB</span>';
                 }}
               />
             </div>
@@ -827,10 +831,7 @@ const PhantomBusterConnectorCard = () => {
 
         {(!connected || editingKey) && (
           <div className="flex gap-2">
-            <Button
-              onClick={handleSave}
-              disabled={saving || !apiKey.trim() || !agentId.trim()}
-            >
+            <Button onClick={handleSave} disabled={saving || !apiKey.trim()}>
               {saving ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-2" />
               ) : (
