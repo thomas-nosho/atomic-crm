@@ -14,7 +14,7 @@ const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/calendar.readonly",
-  "https://www.googleapis.com/auth/contacts.readonly",
+  "https://www.googleapis.com/auth/contacts",
   "https://www.googleapis.com/auth/userinfo.email",
 ].join(" ");
 
@@ -57,11 +57,7 @@ async function getAuthUrl(userId: string) {
   };
 }
 
-async function exchangeCode(
-  userId: string,
-  salesId: number,
-  code: string,
-) {
+async function exchangeCode(userId: string, salesId: number, code: string) {
   const { clientId, clientSecret, redirectUri } = getGoogleConfig();
 
   // Exchange authorization code for tokens
@@ -109,21 +105,19 @@ async function exchangeCode(
   const scopesList = (tokenData.scope ?? SCOPES).split(" ");
 
   // Upsert tokens
-  const { error } = await supabaseAdmin
-    .from("google_oauth_tokens")
-    .upsert(
-      {
-        user_id: userId,
-        sales_id: salesId,
-        access_token: tokenData.access_token,
-        refresh_token: tokenData.refresh_token,
-        expires_at: expiresAt,
-        scopes: scopesList,
-        google_email: googleEmail,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
+  const { error } = await supabaseAdmin.from("google_oauth_tokens").upsert(
+    {
+      user_id: userId,
+      sales_id: salesId,
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expires_at: expiresAt,
+      scopes: scopesList,
+      google_email: googleEmail,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
 
   if (error) {
     console.error("Failed to store tokens:", error);
@@ -131,21 +125,19 @@ async function exchangeCode(
   }
 
   // Create default preferences if not exist
-  await supabaseAdmin
-    .from("connector_preferences")
-    .upsert(
-      {
-        user_id: userId,
-        connector_type: "google",
-        preferences: {
-          showCalendarOnDashboard: true,
-          showEmailsOnContact: true,
-          showCalendarOnContact: true,
-          syncContacts: false,
-        },
+  await supabaseAdmin.from("connector_preferences").upsert(
+    {
+      user_id: userId,
+      connector_type: "google",
+      preferences: {
+        showCalendarOnDashboard: true,
+        showEmailsOnContact: true,
+        showCalendarOnContact: true,
+        syncContacts: false,
       },
-      { onConflict: "user_id,connector_type" },
-    );
+    },
+    { onConflict: "user_id,connector_type" },
+  );
 
   return { connected: true, email: googleEmail, scopes: scopesList };
 }
@@ -215,17 +207,15 @@ async function updatePreferences(
   userId: string,
   preferences: Record<string, boolean>,
 ) {
-  const { error } = await supabaseAdmin
-    .from("connector_preferences")
-    .upsert(
-      {
-        user_id: userId,
-        connector_type: "google",
-        preferences,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id,connector_type" },
-    );
+  const { error } = await supabaseAdmin.from("connector_preferences").upsert(
+    {
+      user_id: userId,
+      connector_type: "google",
+      preferences,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id,connector_type" },
+  );
 
   if (error) {
     console.error("Failed to update preferences:", error);

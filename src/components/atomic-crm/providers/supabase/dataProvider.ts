@@ -366,6 +366,22 @@ const getDataProviderWithCustomMethods = () => {
       if (error) throw new Error("Failed to sync Google contacts");
       return data!.data;
     },
+    async exportGoogleContacts() {
+      const { data, error } = await getSupabaseClient().functions.invoke<{
+        data: { total: number; created: number; skipped: number };
+      }>("google-contacts-sync", {
+        method: "POST",
+        body: { action: "export-to-google" },
+      });
+      if (error) {
+        const msg = (error as any)?.message ?? "";
+        if (msg.includes("GOOGLE_CONTACTS_WRITE_REQUIRED")) {
+          throw new Error("GOOGLE_CONTACTS_WRITE_REQUIRED");
+        }
+        throw new Error("Failed to export contacts to Google");
+      }
+      return data!.data;
+    },
     async getUpcomingCalendarEvents(params: {
       timeMin: string;
       timeMax: string;

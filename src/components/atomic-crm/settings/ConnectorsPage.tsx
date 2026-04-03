@@ -16,6 +16,8 @@ import {
   Save,
   Trash2,
   RefreshCw,
+  Upload,
+  AlertCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,6 +96,7 @@ const GoogleConnectorCard = () => {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const handleConnect = useCallback(async () => {
     setConnecting(true);
@@ -150,6 +153,29 @@ const GoogleConnectorCard = () => {
     }
   }, [dataProvider, notify, invalidate]);
 
+  const handleExportContacts = useCallback(async () => {
+    setExporting(true);
+    try {
+      const result = await dataProvider.exportGoogleContacts();
+      notify(
+        `Export terminé : ${result.created} contact(s) ajouté(s) dans Google`,
+        { type: "success" },
+      );
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (msg === "GOOGLE_CONTACTS_WRITE_REQUIRED") {
+        notify(
+          "Reconnectez votre compte Google pour autoriser l'écriture de contacts",
+          { type: "warning" },
+        );
+      } else {
+        notify("Erreur lors de l'export des contacts", { type: "error" });
+      }
+    } finally {
+      setExporting(false);
+    }
+  }, [dataProvider, notify]);
+
   const handlePreferenceChange = useCallback(
     async (key: keyof GooglePreferences, value: boolean) => {
       if (!status?.preferences) return;
@@ -168,6 +194,9 @@ const GoogleConnectorCard = () => {
 
   const connected = status?.connected ?? false;
   const preferences = status?.preferences;
+  const hasContactsWriteScope = status?.scopes?.includes(
+    "https://www.googleapis.com/auth/contacts",
+  );
 
   return (
     <Card id="google">
@@ -335,8 +364,49 @@ const GoogleConnectorCard = () => {
                     ) : (
                       <RefreshCw className="h-4 w-4 mr-1" />
                     )}
-                    Synchroniser maintenant
+                    Importer depuis Google
                   </Button>
+                </div>
+              )}
+
+              <Separator />
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Export
+              </h3>
+
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex gap-3">
+                  <div className="mt-0.5 text-muted-foreground">
+                    <Upload className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-normal">
+                      Exporter les contacts CRM vers Google
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Pousse vos contacts CRM dans Google Contacts (les doublons
+                      sont ignorés)
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportContacts}
+                  disabled={exporting || !hasContactsWriteScope}
+                >
+                  {exporting ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-1" />
+                  )}
+                  Exporter
+                </Button>
+              </div>
+              {!hasContactsWriteScope && (
+                <div className="ml-7 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  Reconnectez votre compte Google pour activer l'export
                 </div>
               )}
             </div>
