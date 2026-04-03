@@ -136,6 +136,8 @@ jobs:
                     git remote set-url origin https://git:${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}@github.com/$DEPLOY_REPO
                     git remote add production $PRODUCTION_REMOTE
                   fi
+
+            - name: ⚙️ Setup supabase
               uses: supabase/setup-cli@v1
 
             - name: 📥 Download deps
