@@ -274,12 +274,12 @@ const getDataProviderWithCustomMethods = () => {
     async updateConfiguration(
       config: ConfigurationContextValue,
     ): Promise<ConfigurationContextValue> {
-      const { data } = await baseDataProvider.update("configuration", {
-        id: 1,
-        data: { config },
-        previousData: { id: 1 },
-      });
-      return data.config as ConfigurationContextValue;
+      const { error } = await getSupabaseClient()
+        .from("configuration")
+        .update({ config })
+        .eq("id", 1);
+      if (error) throw error;
+      return config;
     },
 
     // ── Google Integration ──────────────────────────────────────────

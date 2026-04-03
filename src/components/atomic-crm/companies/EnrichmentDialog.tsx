@@ -416,8 +416,6 @@ const PappersTab = ({
 
 // ─── PhantomBuster tab ────────────────────────────────────────────────────────
 
-const PHANTOMBUSTER_AGENT_ID_KEY = "pb_linkedin_company_agent_id";
-
 const PhantomBusterTab = ({
   record,
   onDone,
@@ -425,24 +423,29 @@ const PhantomBusterTab = ({
   record: Company;
   onDone: () => void;
 }) => {
+  const { phantombusterApiKey, phantombusterAgentId } =
+    useConfigurationContext();
   const [update] = useUpdate();
   const notify = useNotify();
 
-  const [agentId, setAgentId] = useState(
-    () => localStorage.getItem(PHANTOMBUSTER_AGENT_ID_KEY) ?? "",
-  );
   const [loading, setLoading] = useState(false);
   const [enrichment, setEnrichment] = useState<PhantomEnrichment | null>(null);
 
   const handleScrape = async () => {
-    if (!agentId || !record.linkedin_url) return;
-    localStorage.setItem(PHANTOMBUSTER_AGENT_ID_KEY, agentId);
+    if (!phantombusterApiKey || !phantombusterAgentId || !record.linkedin_url)
+      return;
     setLoading(true);
     setEnrichment(null);
     try {
       const { data, error } = await getSupabaseClient().functions.invoke(
         "enrich-phantombuster",
-        { body: { linkedinUrl: record.linkedin_url, agentId } },
+        {
+          body: {
+            apiKey: phantombusterApiKey,
+            linkedinUrl: record.linkedin_url,
+            agentId: phantombusterAgentId,
+          },
+        },
       );
       if (error) throw error;
       setEnrichment(data);
@@ -481,26 +484,32 @@ const PhantomBusterTab = ({
     );
   };
 
+  if (!phantombusterApiKey || !phantombusterAgentId) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-6 text-center text-sm text-muted-foreground">
+        <AlertCircle className="w-8 h-8 text-muted-foreground/50" />
+        <p>
+          PhantomBuster n'est pas configuré.
+          <br />
+          Ajoutez votre clé API et votre agent dans{" "}
+          <a
+            href="#/connectors"
+            className="underline hover:no-underline font-medium text-foreground"
+          >
+            Paramètres → Connecteurs
+          </a>
+          .
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-muted-foreground">
         Enrichissez la description et le site web depuis LinkedIn via
-        PhantomBuster. Nécessite un agent "LinkedIn Company Scraper" configuré
-        dans votre compte.
+        PhantomBuster.
       </p>
-
-      <div>
-        <Label className="text-xs mb-1 block">Agent ID PhantomBuster</Label>
-        <Input
-          placeholder="Ex: 1234567890"
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Trouvez l'ID dans l'URL de votre Phantom :{" "}
-          <span className="font-mono">phantombuster.com/phantoms/ID/...</span>
-        </p>
-      </div>
 
       <div className="rounded-md border px-3 py-2 text-sm bg-muted/30">
         <span className="text-muted-foreground">URL LinkedIn : </span>
@@ -514,11 +523,7 @@ const PhantomBusterTab = ({
         </a>
       </div>
 
-      <Button
-        onClick={handleScrape}
-        disabled={loading || !agentId}
-        className="w-full"
-      >
+      <Button onClick={handleScrape} disabled={loading} className="w-full">
         {loading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
