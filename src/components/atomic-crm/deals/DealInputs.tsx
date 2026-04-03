@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { required, useRecordContext } from "ra-core";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { AutocompleteArrayInput } from "@/components/admin/autocomplete-array-input";
 import { ReferenceArrayInput } from "@/components/admin/reference-array-input";
 import { ReferenceInput } from "@/components/admin/reference-input";
@@ -78,7 +78,7 @@ const DealLinkedToInputs = ({
     if (!getValues("company_type") && companyTypeFilter) {
       setValue("company_type", companyTypeFilter);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleTypeChange = (newType: string) => {
@@ -138,6 +138,17 @@ const DealLinkedToInputs = ({
 
 const DealMiscInputs = () => {
   const { dealStages, dealCategories } = useConfigurationContext();
+  const { setValue, getValues } = useFormContext();
+  const stage = useWatch({ name: "stage" });
+  const isWon = stage === "closed-won";
+  const today = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    if (isWon && !getValues("won_at")) {
+      setValue("won_at", today);
+    }
+  }, [isWon, getValues, setValue, today]);
+
   return (
     <div className="flex flex-col gap-4 flex-1">
       <h3 className="text-base font-medium">Divers</h3>
@@ -160,7 +171,7 @@ const DealMiscInputs = () => {
         validate={required()}
         source="expected_closing_date"
         helperText={false}
-        defaultValue={new Date().toISOString().split("T")[0]}
+        defaultValue={today}
       />
       <DateInput
         source="trial_start_date"
@@ -176,6 +187,15 @@ const DealMiscInputs = () => {
         helperText={false}
         validate={required()}
       />
+      {isWon && (
+        <DateInput
+          source="won_at"
+          label="Date de gain"
+          helperText={false}
+          defaultValue={today}
+          validate={required()}
+        />
+      )}
     </div>
   );
 };
