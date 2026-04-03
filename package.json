@@ -1,6 +1,6 @@
 {
   "name": "atomic-crm",
-  "version": "0.1.0",
+  "version": "1.9.24",
   "type": "module",
   "scripts": {
     "test": "vitest",

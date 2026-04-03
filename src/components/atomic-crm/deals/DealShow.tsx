@@ -50,6 +50,9 @@ export const DealShow = ({ open, id }: { open: boolean; id?: string }) => {
 
 const DealShowContent = () => {
   const { dealStages, dealCategories } = useConfigurationContext();
+  const wonStage = dealStages.find((s) =>
+    s.label.toLowerCase().includes("gagn"),
+  );
   const record = useRecordContext<Deal>();
   if (!record) return null;
 
@@ -140,6 +143,17 @@ const DealShowContent = () => {
                 {findDealLabel(dealStages, record.stage)}
               </span>
             </div>
+
+            {wonStage && record.stage === wonStage.value && record.won_at && (
+              <div className="flex flex-col mr-10">
+                <span className="text-xs text-muted-foreground tracking-wide">
+                  Date gagnée
+                </span>
+                <span className="text-sm">
+                  {formatISODateString(record.won_at)}
+                </span>
+              </div>
+            )}
           </div>
 
           {!!record.contact_ids?.length && (
