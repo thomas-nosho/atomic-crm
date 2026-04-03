@@ -11,6 +11,7 @@ const disconnectedStatus: GoogleConnectionStatus = {
   email: null,
   scopes: [],
   preferences: defaultGooglePreferences,
+  needsReauth: false,
 };
 
 export function useGoogleConnectionStatus() {

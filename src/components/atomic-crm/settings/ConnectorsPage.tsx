@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { useDataProvider, useNotify } from "ra-core";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   CheckCircle2,
   ExternalLink,
   Loader2,
@@ -18,6 +19,7 @@ import {
   Save,
   Trash2,
   RefreshCw,
+  Upload,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +101,7 @@ const GoogleConnectorCard = () => {
   const [connecting, setConnecting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const handleConnect = useCallback(async () => {
     setConnecting(true);
@@ -154,6 +157,23 @@ const GoogleConnectorCard = () => {
       setSyncing(false);
     }
   }, [dataProvider, notify, invalidate]);
+
+  const handleExportContacts = useCallback(async () => {
+    setExporting(true);
+    try {
+      const result = await dataProvider.exportContactsToGoogle();
+      notify(
+        `Export terminé : ${result.created} créé(s), ${result.updated} mis à jour`,
+        { type: "success" },
+      );
+    } catch {
+      notify("Erreur lors de l'export des contacts vers Google", {
+        type: "error",
+      });
+    } finally {
+      setExporting(false);
+    }
+  }, [dataProvider, notify]);
 
   const handlePreferenceChange = useCallback(
     async (key: keyof GooglePreferences, value: boolean) => {
@@ -278,6 +298,38 @@ const GoogleConnectorCard = () => {
           </div>
         )}
 
+        {/* Re-auth banner */}
+        {connected && status?.needsReauth && (
+          <>
+            <Separator />
+            <div className="flex items-start gap-3 rounded-md border border-orange-200 bg-orange-50 px-4 py-3 dark:border-orange-800 dark:bg-orange-950">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-orange-500" />
+              <div className="flex-1 space-y-1">
+                <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+                  Reconnexion requise
+                </p>
+                <p className="text-xs text-orange-700 dark:text-orange-400">
+                  Pour exporter les contacts vers Google, vous devez reconnecter
+                  votre compte avec les nouvelles autorisations.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleConnect}
+                disabled={connecting}
+                className="shrink-0 border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-300"
+              >
+                {connecting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "Reconnecter"
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+
         {/* Preferences (only shown when connected) */}
         {connected && preferences && (
           <>
@@ -341,6 +393,31 @@ const GoogleConnectorCard = () => {
                       <RefreshCw className="h-4 w-4 mr-1" />
                     )}
                     Synchroniser maintenant
+                  </Button>
+                </div>
+              )}
+
+              <PreferenceToggle
+                icon={<Upload className="h-4 w-4" />}
+                label="Exporter les contacts CRM vers Google"
+                description="Pousse tous les contacts du CRM vers Google Contacts (téléphone, email, société)"
+                checked={preferences.exportContacts}
+                onChange={(v) => handlePreferenceChange("exportContacts", v)}
+              />
+              {preferences.exportContacts && (
+                <div className="ml-7">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportContacts}
+                    disabled={exporting || status?.needsReauth}
+                  >
+                    {exporting ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-1" />
+                    )}
+                    Exporter vers Google maintenant
                   </Button>
                 </div>
               )}

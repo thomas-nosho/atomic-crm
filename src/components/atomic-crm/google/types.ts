@@ -3,6 +3,7 @@ export interface GooglePreferences {
   showEmailsOnContact: boolean;
   showCalendarOnContact: boolean;
   syncContacts: boolean;
+  exportContacts: boolean;
 }
 
 export const defaultGooglePreferences: GooglePreferences = {
@@ -10,6 +11,7 @@ export const defaultGooglePreferences: GooglePreferences = {
   showEmailsOnContact: true,
   showCalendarOnContact: true,
   syncContacts: false,
+  exportContacts: false,
 };
 
 export interface GoogleConnectionStatus {
@@ -17,6 +19,7 @@ export interface GoogleConnectionStatus {
   email: string | null;
   scopes: string[];
   preferences: GooglePreferences;
+  needsReauth: boolean;
 }
 
 export interface GoogleCalendarEvent {
