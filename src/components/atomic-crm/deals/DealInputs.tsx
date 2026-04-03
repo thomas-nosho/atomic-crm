@@ -122,6 +122,7 @@ const DealLinkedToInputs = ({
         <AutocompleteCompanyInput
           validate={required()}
           defaultType={companyTypeFilter || undefined}
+          label="Entreprise"
         />
       </ReferenceInput>
 
@@ -159,6 +160,7 @@ const DealMiscInputs = () => {
       <DateInput
         validate={required()}
         source="expected_closing_date"
+        label="Date de clôture prévue"
         helperText={false}
         defaultValue={new Date().toISOString().split("T")[0]}
       />
@@ -169,6 +171,7 @@ const DealMiscInputs = () => {
       />
       <SelectInput
         source="stage"
+        label="Étape"
         choices={dealStages}
         optionText="label"
         optionValue="value"
