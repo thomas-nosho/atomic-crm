@@ -59,14 +59,17 @@ jobs:
         if: ${{ vars.DEMO_DEPLOY_REPOSITORY != '' }}
 
         env:
-            VITE_IS_DEMO: true
-            VITE_INBOUND_EMAIL: ${{ vars.VITE_INBOUND_EMAIL }}
-            VITE_ATTACHMENTS_BUCKET: ${{ vars.VITE_ATTACHMENTS_BUCKET || 'attachments' }}
             PRODUCTION_REMOTE: https://git:${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ vars.DEMO_DEPLOY_REPOSITORY }}
 
         steps:
             - name: 📥 Checkout repo
               uses: actions/checkout@v4
+
+            - name: 🔑 Fetch secrets from Doppler
+              uses: dopplerhq/secrets-fetch-action@v1
+              with:
+                  doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+                  inject-env-vars: true
 
             - name: ⚙️ Setup node
               uses: actions/setup-node@v4
@@ -99,26 +102,18 @@ jobs:
         timeout-minutes: 10
 
         env:
-            SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-            SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
-            SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
-            VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-            VITE_SB_PUBLISHABLE_KEY: ${{ secrets.SB_PUBLISHABLE_KEY }}
-            IS_SUPABASE_CONFIGURED: ${{ secrets.SUPABASE_ACCESS_TOKEN && secrets.SUPABASE_DB_PASSWORD && secrets.SUPABASE_PROJECT_ID && secrets.SUPABASE_URL && secrets.SB_PUBLISHABLE_KEY }}
-            VITE_IS_DEMO: ${{ vars.VITE_IS_DEMO }}
-            VITE_INBOUND_EMAIL: ${{ vars.VITE_INBOUND_EMAIL }}
-            VITE_ATTACHMENTS_BUCKET: ${{ vars.VITE_ATTACHMENTS_BUCKET || 'attachments' }}
             PRODUCTION_REMOTE: https://git:${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}@github.com/${{ vars.DEPLOY_REPOSITORY }}
-            POSTMARK_WEBHOOK_USER: ${{secrets.POSTMARK_WEBHOOK_USER}}
-            POSTMARK_WEBHOOK_PASSWORD: ${{secrets.POSTMARK_WEBHOOK_PASSWORD}}
-            POSTMARK_WEBHOOK_AUTHORIZED_IPS: ${{secrets.POSTMARK_WEBHOOK_AUTHORIZED_IPS}}
-            VITE_GOOGLE_WORKPLACE_DOMAIN: ${{secrets.VITE_GOOGLE_WORKPLACE_DOMAIN}}
-            PAPPERS_API_KEY: ${{secrets.PAPPERS_API_KEY}}
-            PHANTOMBUSTER_API_KEY: ${{secrets.PHANTOMBUSTER_API_KEY}}
 
         steps:
             - name: 📥 Checkout repo
               uses: actions/checkout@v4
+
+            - name: 🔑 Fetch secrets from Doppler
+              uses: dopplerhq/secrets-fetch-action@v1
+              id: doppler
+              with:
+                  doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+                  inject-env-vars: true
 
             - name: ⚙️ Setup node
               uses: actions/setup-node@v4
@@ -146,15 +141,15 @@ jobs:
             - name: 🔨 Build
               run: npm run build
 
-            - if: ${{ env.IS_SUPABASE_CONFIGURED }}
+            - if: ${{ env.SUPABASE_ACCESS_TOKEN && env.SUPABASE_DB_PASSWORD && env.SUPABASE_PROJECT_ID && env.SUPABASE_URL && env.SB_PUBLISHABLE_KEY }}
               name: 🔗 Supabase Link
               run: npx supabase link --project-ref $SUPABASE_PROJECT_ID
 
-            - if: ${{ env.IS_SUPABASE_CONFIGURED }}
+            - if: ${{ env.SUPABASE_ACCESS_TOKEN && env.SUPABASE_DB_PASSWORD && env.SUPABASE_PROJECT_ID }}
               name: 📡 Push supabase migrations
               run: npx supabase db push
 
-            - if: ${{ env.IS_SUPABASE_CONFIGURED && env.POSTMARK_WEBHOOK_USER && env.POSTMARK_WEBHOOK_PASSWORD && env.POSTMARK_WEBHOOK_AUTHORIZED_IPS }}
+            - if: ${{ env.SUPABASE_ACCESS_TOKEN && env.POSTMARK_WEBHOOK_USER && env.POSTMARK_WEBHOOK_PASSWORD && env.POSTMARK_WEBHOOK_AUTHORIZED_IPS }}
               name: 📡 Push supabase postmark webhook user secret
               run: |
                   npx supabase secrets set POSTMARK_WEBHOOK_USER=${{ env.POSTMARK_WEBHOOK_USER }}
@@ -163,13 +158,13 @@ jobs:
                   npx supabase secrets set VITE_INBOUND_EMAIL=${{ env.VITE_INBOUND_EMAIL }}
                   npx supabase secrets set VITE_ATTACHMENTS_BUCKET=${{ env.VITE_ATTACHMENTS_BUCKET }}
 
-            - if: ${{ env.IS_SUPABASE_CONFIGURED && env.PAPPERS_API_KEY }}
+            - if: ${{ env.SUPABASE_ACCESS_TOKEN && env.PAPPERS_API_KEY }}
               name: 📡 Push supabase enrichment secrets
               run: |
                   npx supabase secrets set PAPPERS_API_KEY=${{ env.PAPPERS_API_KEY }}
                   npx supabase secrets set PHANTOMBUSTER_API_KEY=${{ env.PHANTOMBUSTER_API_KEY }}
 
-            - if: ${{ env.IS_SUPABASE_CONFIGURED }}
+            - if: ${{ env.SUPABASE_ACCESS_TOKEN }}
               name: 📡 Deploy supabase functions
               run: npx supabase functions deploy
 
@@ -185,11 +180,11 @@ jobs:
               name: Check SUPABASE_PROJECT_ID secret
               run: echo ':warning:SUPABASE_PROJECT_ID secret is missing' >> $GITHUB_STEP_SUMMARY
 
-            - if: ${{ !env.VITE_SUPABASE_URL }}
+            - if: ${{ !env.SUPABASE_URL }}
               name: Check SUPABASE_URL secret
               run: echo ':warning:SUPABASE_URL secret is missing' >> $GITHUB_STEP_SUMMARY
 
-            - if: ${{ !env.VITE_SB_PUBLISHABLE_KEY }}
+            - if: ${{ !env.SB_PUBLISHABLE_KEY }}
               name: Check SB_PUBLISHABLE_KEY secret
               run: echo ':warning:SB_PUBLISHABLE_KEY secret is missing' >> $GITHUB_STEP_SUMMARY
 
@@ -198,14 +193,14 @@ jobs:
               run: echo ':warning:POSTMARK_WEBHOOK_USER secret is missing' >> $GITHUB_STEP_SUMMARY
 
             - if: ${{ !env.POSTMARK_WEBHOOK_PASSWORD }}
-              name: Check POSTMARK_WEBHOOK_USER secret
+              name: Check POSTMARK_WEBHOOK_PASSWORD secret
               run: echo ':warning:POSTMARK_WEBHOOK_PASSWORD secret is missing' >> $GITHUB_STEP_SUMMARY
 
             - if: ${{ !env.POSTMARK_WEBHOOK_AUTHORIZED_IPS }}
-              name: Check POSTMARK_WEBHOOK_USER secret
+              name: Check POSTMARK_WEBHOOK_AUTHORIZED_IPS secret
               run: echo ':warning:POSTMARK_WEBHOOK_AUTHORIZED_IPS secret is missing' >> $GITHUB_STEP_SUMMARY
 
-            - if: ${{ !env.IS_SUPABASE_CONFIGURED }}
+            - if: ${{ !env.SUPABASE_ACCESS_TOKEN }}
               name: Supabase deployment skipped
               run: echo ':warning:Supabase deployment skipped' >> $GITHUB_STEP_SUMMARY
 

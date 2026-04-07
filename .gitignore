@@ -19,9 +19,11 @@ __screenshots__
 .DS_Store
 .env.local
 .env.production
+.env.development
 .env.development.local
 .env.test.local
 .env.production.local
+.env.e2e
 .eslintcache
 
 npm-debug.log*
@@ -36,10 +38,12 @@ dist/
 .env
 *storybook.log
 
+# Supabase local secrets (never commit private keys or real credentials)
+supabase/signing_keys.json
+supabase/functions/.env
+
 # Shadcn Registry
 public/r/
-
-!supabase/functions/.env
 .claude/settings.local.json
 
 # Playwright

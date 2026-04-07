@@ -78,6 +78,12 @@ jobs:
       - name: 📥 Checkout repo
         uses: actions/checkout@v4
 
+      - name: 🔑 Fetch secrets from Doppler
+        uses: dopplerhq/secrets-fetch-action@v1
+        with:
+            doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+            inject-env-vars: true
+
       - name: ⚙️ Setup node
         uses: actions/setup-node@v4
         with:
