@@ -60,11 +60,19 @@ jobs:
                   sudo apt-get install -y --no-install-recommends postgresql-client
 
             - name: 🔎 Confirm secret is configured
+              id: check_secret
               run: |
                   if [[ -z "$SUPABASE_DB_URL" ]]; then
+                      if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                          echo "::warning::SUPABASE_DB_URL secret is not configured; skipping the drift check on this pull request. Add the secret in repo settings > Secrets and variables > Actions (use the Session pooler connection string from Supabase Studio > Project Settings > Database) so scheduled runs can execute."
+                          echo "skip=true" >> "$GITHUB_OUTPUT"
+                          exit 0
+                      fi
                       echo "::error::SUPABASE_DB_URL secret is not configured. Add it in repo settings > Secrets and variables > Actions. Use the 'Session pooler' connection string from Supabase Studio > Project Settings > Database."
                       exit 1
                   fi
+                  echo "skip=false" >> "$GITHUB_OUTPUT"
 
             - name: 🛡️ Run drift check
+              if: steps.check_secret.outputs.skip != 'true'
               run: ./scripts/drift-check.sh
