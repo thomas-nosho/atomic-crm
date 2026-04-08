@@ -87,7 +87,7 @@ const DealShowContent = () => {
           <div className="flex gap-8 m-4">
             <div className="flex flex-col mr-10">
               <span className="text-xs text-muted-foreground tracking-wide">
-                Expected closing date
+                Date de clôture prévue
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-sm">
@@ -97,11 +97,29 @@ const DealShowContent = () => {
                     : "–"}
                 </span>
                 {record.expected_closing_date &&
-                new Date(record.expected_closing_date) < new Date() ? (
-                  <Badge variant="destructive">Past</Badge>
+                new Date(record.expected_closing_date) < new Date() &&
+                record.stage !== "closed-won" ? (
+                  <Badge variant="destructive">Dépassée</Badge>
                 ) : null}
               </div>
             </div>
+
+            {record.stage === "closed-won" && record.won_at && (
+              <div className="flex flex-col mr-10">
+                <span className="text-xs text-muted-foreground tracking-wide">
+                  Date de gain
+                </span>
+                <span className="text-sm">
+                  {isValid(new Date(record.won_at))
+                    ? new Date(record.won_at).toLocaleDateString("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "–"}
+                </span>
+              </div>
+            )}
 
             <div className="flex flex-col mr-10">
               <span className="text-xs text-muted-foreground tracking-wide">

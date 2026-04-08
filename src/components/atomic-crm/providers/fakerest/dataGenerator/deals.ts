@@ -27,17 +27,22 @@ export const generateDeals = (db: Db): Deal[] => {
       .toISOString()
       .split("T")[0];
 
+    const stage = random.arrayElement(defaultDealStages).value;
+    const updated_at = randomDate(new Date(created_at)).toISOString();
+    const won_at = stage === "closed-won" ? updated_at : null;
+
     return {
       id,
       name: lowercaseName[0].toUpperCase() + lowercaseName.slice(1),
       company_id: company.id,
       contact_ids: contacts.map((contact) => contact.id),
       category: random.arrayElement(defaultDealCategories).value,
-      stage: random.arrayElement(defaultDealStages).value,
+      stage,
       description: lorem.paragraphs(datatype.number({ min: 1, max: 4 })),
       amount: datatype.number(1000) * 100,
       created_at,
-      updated_at: randomDate(new Date(created_at)).toISOString(),
+      updated_at,
+      won_at,
       expected_closing_date,
       sales_id: company.sales_id,
       index: 0,

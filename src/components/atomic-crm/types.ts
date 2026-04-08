@@ -123,6 +123,7 @@ export type Deal = {
   created_at: string;
   updated_at: string;
   archived_at?: string;
+  won_at?: string | null;
   expected_closing_date: string;
   trial_start_date?: string;
   sales_id: Identifier;

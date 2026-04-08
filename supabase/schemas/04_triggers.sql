@@ -65,6 +65,13 @@ create or replace trigger on_deal_notes_deleted_delete_note_attachments
     after delete on public.deal_notes
     for each row execute function public.cleanup_note_attachments();
 
+-- Set won_at when a deal stage changes to/from closed-won
+create or replace trigger deal_stage_won_at
+    before update on public.deals
+    for each row
+    when (old.stage is distinct from new.stage)
+    execute function public.set_deal_won_at();
+
 -- Auth triggers: sync auth.users to public.sales
 create or replace trigger on_auth_user_created
     after insert on auth.users
