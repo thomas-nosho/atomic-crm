@@ -2,7 +2,8 @@ name: 📋 Log to Backlog
 
 # Crée une issue GitHub à chaque push sur main et l'ajoute
 # automatiquement au projet Backlog (nosho-org/projects/7).
-# Nécessite le secret ORG_PROJECT_TOKEN (PAT avec scopes: repo + project).
+# Utilise GITHUB_PAT depuis Doppler (projet nosho-crm, config prd).
+# Secret requis: DOPPLER_TOKEN dans GitHub Actions Secrets.
 
 on:
     push:
@@ -20,6 +21,13 @@ jobs:
         if: ${{ !contains(github.actor, '[bot]') }}
 
         steps:
+            - name: 🔑 Fetch secrets from Doppler
+              uses: dopplerhq/secrets-fetch-action@v1
+              id: doppler
+              with:
+                  doppler-token: ${{ secrets.DOPPLER_TOKEN }}
+                  inject-env-vars: true
+
             - name: Extract metadata
               id: meta
               env:
@@ -47,7 +55,7 @@ jobs:
             - name: Create GitHub issue
               id: create-issue
               env:
-                  GH_TOKEN: ${{ secrets.ORG_PROJECT_TOKEN }}
+                  GH_TOKEN: ${{ env.GITHUB_PAT }}
                   REPO: ${{ github.repository }}
                   REPO_NAME: ${{ github.event.repository.name }}
                   COMMIT_SHA: ${{ github.sha }}
@@ -116,7 +124,7 @@ ${DESC}"
 
             - name: Add to Backlog project (nosho-org/projects/7)
               env:
-                  GH_TOKEN: ${{ secrets.ORG_PROJECT_TOKEN }}
+                  GH_TOKEN: ${{ env.GITHUB_PAT }}
                   ISSUE_NUM: ${{ steps.create-issue.outputs.issue_num }}
                   WEEK: ${{ steps.meta.outputs.week }}
               run: |

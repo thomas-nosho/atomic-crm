@@ -187,6 +187,41 @@ Import `test-data/contacts.csv` via the Contacts page → Import button.
 - Storage (attachments): http://localhost:54323/project/default/storage/buckets/attachments
 - Inbucket (email testing): http://localhost:54324/
 
+## Secrets Management (Doppler)
+
+All project secrets are managed via **Doppler** — project `nosho-crm`, config `prd`.
+
+### Accessing secrets in a Claude session
+The SessionStart hook (`.claude/hooks/session-start.sh`) automatically injects all Doppler secrets as environment variables at the start of every remote Claude Code session.
+
+To access secrets manually at any time:
+```bash
+doppler secrets download --no-file --format env  # list all as KEY=VALUE
+doppler secrets get GITHUB_PAT --plain           # get a single secret
+doppler run -- env | grep SUPABASE               # run command with secrets injected
+```
+
+### Key secrets in Doppler (`nosho-crm / prd`)
+| Secret | Usage |
+|--------|-------|
+| `GITHUB_PAT` | GitHub PAT (repo + project scopes) — used by CI workflows |
+| `SUPABASE_ACCESS_TOKEN` | Supabase CLI authentication |
+| `SUPABASE_DB_PASSWORD` | Database password |
+| `SUPABASE_PROJECT_ID` | Supabase project ref |
+| `SUPABASE_URL` | Supabase REST API URL |
+| `PAPPERS_API_KEY` | Company enrichment (Pappers) |
+| `PHANTOMBUSTER_API_KEY` | Contact enrichment (PhantomBuster) |
+| `DROPCONTACT_API_KEY` | Contact enrichment (Dropcontact) |
+| `DOPPLER_TOKEN` | Doppler service token — stored in GitHub Actions Secrets |
+
+### Doppler CLI (configured globally)
+The Doppler CLI is installed at `/usr/local/bin/doppler` and the service token is stored in `~/.config/doppler/`. No authentication needed — just run `doppler secrets`.
+
+### Required GitHub Actions Secret
+Only one secret needs to be set manually in GitHub Actions:
+- **`DOPPLER_TOKEN`** → value = the service token for project `nosho-crm / prd` (retrieve from Doppler dashboard → Access → Service Tokens, token named `claude-code`)
+- All other secrets flow through Doppler automatically
+
 ## Backlog Project Integration
 
 Every push to `main` automatically creates a GitHub Issue and adds it to the **Backlog project** ([nosho-org/projects/7](https://github.com/orgs/nosho-org/projects/7)) via `.github/workflows/log-to-backlog.yml`.
@@ -196,12 +231,10 @@ Every push to `main` automatically creates a GitHub Issue and adds it to the **B
 - **Issue created** in `nosho-org/nosho-crm` with labels `done` + `repo:nosho-crm`
 - **Added to project #7** with Status = `Done` and Week = current ISO week (e.g. `2026-W15`)
 - PR merges are detected automatically and formatted with PR metadata
+- Uses `GITHUB_PAT` from Doppler (injected via `dopplerhq/secrets-fetch-action`)
 
-### Required secret
-The workflow requires `ORG_PROJECT_TOKEN` (PAT) set in the repo secrets:
-- Go to **Settings → Secrets → Actions → New repository secret**
-- Name: `ORG_PROJECT_TOKEN`
-- Value: a GitHub Personal Access Token with scopes **`repo`** + **`project`**
+### Required GitHub Actions secret
+- **`DOPPLER_TOKEN`** in repo Settings → Secrets → Actions (service token `nosho-crm / prd`, see Doppler dashboard)
 
 ### Project fields expected
 The project must have:
