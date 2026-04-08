@@ -1,0 +1,215 @@
+name: 📋 Log to Backlog
+
+# Crée une issue GitHub à chaque push sur main et l'ajoute
+# automatiquement au projet Backlog (nosho-org/projects/7).
+# Nécessite le secret ORG_PROJECT_TOKEN (PAT avec scopes: repo + project).
+
+on:
+    push:
+        branches: [main]
+
+permissions:
+    issues: write
+    contents: read
+
+jobs:
+    log-commit:
+        name: Log commit to Backlog
+        runs-on: ubuntu-latest
+        # Ignorer les commits des bots GitHub Actions
+        if: ${{ !contains(github.actor, '[bot]') }}
+
+        steps:
+            - name: Extract metadata
+              id: meta
+              env:
+                  COMMIT_MSG: ${{ github.event.head_commit.message }}
+              run: |
+                  WEEK=$(date -u +"%G-W%V")
+                  echo "week=$WEEK" >> $GITHUB_OUTPUT
+
+                  FIRST_LINE=$(echo "$COMMIT_MSG" | head -1)
+                  echo "first_line=$FIRST_LINE" >> $GITHUB_OUTPUT
+
+                  # Détecter un merge de PR (pattern: "Merge pull request #NNN from ...")
+                  if echo "$FIRST_LINE" | grep -qE "^Merge pull request #[0-9]+"; then
+                      PR_NUM=$(echo "$FIRST_LINE" | grep -oE "#[0-9]+" | head -1 | tr -d '#')
+                      BRANCH=$(echo "$COMMIT_MSG" | sed -n '3p' | xargs)
+                      echo "is_pr=true"       >> $GITHUB_OUTPUT
+                      echo "pr_num=$PR_NUM"   >> $GITHUB_OUTPUT
+                      echo "branch=${BRANCH} → main" >> $GITHUB_OUTPUT
+                  else
+                      echo "is_pr=false"  >> $GITHUB_OUTPUT
+                      echo "pr_num="      >> $GITHUB_OUTPUT
+                      echo "branch=main"  >> $GITHUB_OUTPUT
+                  fi
+
+            - name: Create GitHub issue
+              id: create-issue
+              env:
+                  GH_TOKEN: ${{ secrets.ORG_PROJECT_TOKEN }}
+                  REPO: ${{ github.repository }}
+                  REPO_NAME: ${{ github.event.repository.name }}
+                  COMMIT_SHA: ${{ github.sha }}
+                  COMMIT_MSG: ${{ github.event.head_commit.message }}
+                  AUTHOR: ${{ github.event.head_commit.author.username || github.actor }}
+                  WEEK: ${{ steps.meta.outputs.week }}
+                  IS_PR: ${{ steps.meta.outputs.is_pr }}
+                  PR_NUM: ${{ steps.meta.outputs.pr_num }}
+                  BRANCH: ${{ steps.meta.outputs.branch }}
+                  FIRST_LINE: ${{ steps.meta.outputs.first_line }}
+              run: |
+                  SHORT_SHA="${COMMIT_SHA:0:7}"
+                  DESC=$(echo "$COMMIT_MSG" | tail -n +3)
+
+                  # Créer les labels si inexistants
+                  gh label create "done"            --color "0E8A16" --repo "$REPO" 2>/dev/null || true
+                  gh label create "repo:nosho-crm" --color "1D76DB" --repo "$REPO" 2>/dev/null || true
+
+                  if [ "$IS_PR" = "true" ]; then
+                      PR_LINK="https://github.com/${REPO}/pull/${PR_NUM}"
+                      TITLE="✅ [${REPO_NAME}] ${FIRST_LINE}"
+                      BODY="## ✅ PR mergée : [#${PR_NUM} ${FIRST_LINE}](${PR_LINK})
+
+## Métadonnées
+
+| Champ | Valeur |
+|-------|--------|
+| Repo | \`${REPO_NAME}\` |
+| PR | [#${PR_NUM}](${PR_LINK}) |
+| Semaine | \`${WEEK}\` |
+| Mergée par | @${AUTHOR} |
+| Branche | \`${BRANCH}\` |
+
+## Description
+
+${DESC}"
+                  else
+                      COMMIT_LINK="https://github.com/${REPO}/commit/${COMMIT_SHA}"
+                      TITLE="✅ [${REPO_NAME}] ${FIRST_LINE}"
+                      BODY="## ✅ Commit : [\`${SHORT_SHA}\` ${FIRST_LINE}](${COMMIT_LINK})
+
+## Métadonnées
+
+| Champ | Valeur |
+|-------|--------|
+| Repo | \`${REPO_NAME}\` |
+| Commit | [\`${SHORT_SHA}\`](${COMMIT_LINK}) |
+| Semaine | \`${WEEK}\` |
+| Pushé par | @${AUTHOR} |
+| Branche | \`main\` |
+
+## Description
+
+${DESC}"
+                  fi
+
+                  ISSUE_URL=$(gh issue create \
+                      --repo "$REPO" \
+                      --title "$TITLE" \
+                      --body "$BODY" \
+                      --label "done,repo:nosho-crm")
+
+                  ISSUE_NUM=$(echo "$ISSUE_URL" | grep -oE "[0-9]+$")
+                  echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+                  echo "✅ Issue #${ISSUE_NUM} créée : $ISSUE_URL"
+
+            - name: Add to Backlog project (nosho-org/projects/7)
+              env:
+                  GH_TOKEN: ${{ secrets.ORG_PROJECT_TOKEN }}
+                  ISSUE_NUM: ${{ steps.create-issue.outputs.issue_num }}
+                  WEEK: ${{ steps.meta.outputs.week }}
+              run: |
+                  # Récupérer l'ID du projet et ses champs
+                  PROJECT_DATA=$(gh api graphql -f query='
+                    query {
+                      organization(login: "nosho-org") {
+                        projectV2(number: 7) {
+                          id
+                          fields(first: 30) {
+                            nodes {
+                              ... on ProjectV2Field {
+                                id
+                                name
+                                dataType
+                              }
+                              ... on ProjectV2SingleSelectField {
+                                id
+                                name
+                                options { id name }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ')
+
+                  PROJECT_ID=$(echo "$PROJECT_DATA" | jq -r '.data.organization.projectV2.id')
+                  echo "Project ID: $PROJECT_ID"
+
+                  # Récupérer le node ID de l'issue
+                  ISSUE_DATA=$(gh api graphql -f query="
+                    query {
+                      repository(owner: \"nosho-org\", name: \"nosho-crm\") {
+                        issue(number: ${ISSUE_NUM}) { id }
+                      }
+                    }
+                  ")
+                  ISSUE_NODE_ID=$(echo "$ISSUE_DATA" | jq -r '.data.repository.issue.id')
+                  echo "Issue node ID: $ISSUE_NODE_ID"
+
+                  # Ajouter l'issue au projet
+                  ITEM_DATA=$(gh api graphql -f query="
+                    mutation {
+                      addProjectV2ItemById(input: {
+                        projectId: \"${PROJECT_ID}\"
+                        contentId: \"${ISSUE_NODE_ID}\"
+                      }) {
+                        item { id }
+                      }
+                    }
+                  ")
+                  ITEM_ID=$(echo "$ITEM_DATA" | jq -r '.data.addProjectV2ItemById.item.id')
+                  echo "Project item ID: $ITEM_ID"
+
+                  # IDs des champs Status et Week
+                  STATUS_FIELD_ID=$(echo "$PROJECT_DATA" | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name == "Status") | .id')
+                  DONE_OPTION_ID=$(echo "$PROJECT_DATA"  | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name == "Status") | .options[] | select(.name == "Done") | .id')
+                  WEEK_FIELD_ID=$(echo "$PROJECT_DATA"   | jq -r '.data.organization.projectV2.fields.nodes[] | select(.name == "Week") | .id')
+
+                  # Mettre le status à "Done"
+                  if [ -n "$STATUS_FIELD_ID" ] && [ -n "$DONE_OPTION_ID" ]; then
+                      gh api graphql -f query="
+                        mutation {
+                          updateProjectV2ItemFieldValue(input: {
+                            projectId: \"${PROJECT_ID}\"
+                            itemId:     \"${ITEM_ID}\"
+                            fieldId:    \"${STATUS_FIELD_ID}\"
+                            value: {singleSelectOptionId: \"${DONE_OPTION_ID}\"}
+                          }) {
+                            projectV2Item { id }
+                          }
+                        }
+                      "
+                      echo "✅ Status → Done"
+                  fi
+
+                  # Renseigner le champ Week
+                  if [ -n "$WEEK_FIELD_ID" ]; then
+                      gh api graphql -f query="
+                        mutation {
+                          updateProjectV2ItemFieldValue(input: {
+                            projectId: \"${PROJECT_ID}\"
+                            itemId:     \"${ITEM_ID}\"
+                            fieldId:    \"${WEEK_FIELD_ID}\"
+                            value: {text: \"${WEEK}\"}
+                          }) {
+                            projectV2Item { id }
+                          }
+                        }
+                      "
+                      echo "✅ Week → $WEEK"
+                  fi
+
+                  echo "✅ Issue #${ISSUE_NUM} ajoutée au Backlog"

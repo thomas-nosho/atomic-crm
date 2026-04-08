@@ -187,6 +187,27 @@ Import `test-data/contacts.csv` via the Contacts page → Import button.
 - Storage (attachments): http://localhost:54323/project/default/storage/buckets/attachments
 - Inbucket (email testing): http://localhost:54324/
 
+## Backlog Project Integration
+
+Every push to `main` automatically creates a GitHub Issue and adds it to the **Backlog project** ([nosho-org/projects/7](https://github.com/orgs/nosho-org/projects/7)) via `.github/workflows/log-to-backlog.yml`.
+
+### How it works
+- **Trigger**: push to `main` (skips GitHub Actions bot commits)
+- **Issue created** in `nosho-org/nosho-crm` with labels `done` + `repo:nosho-crm`
+- **Added to project #7** with Status = `Done` and Week = current ISO week (e.g. `2026-W15`)
+- PR merges are detected automatically and formatted with PR metadata
+
+### Required secret
+The workflow requires `ORG_PROJECT_TOKEN` (PAT) set in the repo secrets:
+- Go to **Settings → Secrets → Actions → New repository secret**
+- Name: `ORG_PROJECT_TOKEN`
+- Value: a GitHub Personal Access Token with scopes **`repo`** + **`project`**
+
+### Project fields expected
+The project must have:
+- A `Status` single-select field with a `Done` option
+- A `Week` text field
+
 ## Important Notes
 
 - The codebase is intentionally small (~15,000 LOC in `src/components/atomic-crm`) for easy customization
